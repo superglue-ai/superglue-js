@@ -1,0 +1,30 @@
+{
+    "name": "@superglue/superglue",
+    "version": "0.1.0",
+    "main": "dist/superglue.js",
+    "types": "dist/superglue.d.ts",
+    "files": [
+      "dist"
+    ],
+    "license": "Apache-2.0",
+    "scripts": {
+      "build": "tsc",
+      "prepare": "npm run build"
+    },
+    "author": {
+        "name": "Index Labs Inc.",
+        "email": "stefan@superglue.cloud",
+        "url": "https://superglue.cloud"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/superglue-ai/superglue-js"
+    },
+    "homepage": "https://superglue.cloud",
+    "bugs": {
+        "url": "https://github.com/superglue-ai/superglue-js/issues"
+    },
+    "devDependencies": {
+      "typescript": "^5.0.0"
+    }
+}
