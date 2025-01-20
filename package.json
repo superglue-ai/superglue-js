@@ -1,6 +1,6 @@
 {
     "name": "@superglue/superglue",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "main": "dist/superglue.js",
     "types": "dist/superglue.d.ts",
     "files": [
@@ -10,6 +10,9 @@
     "scripts": {
       "build": "tsc",
       "prepare": "npm run build"
+    },
+    "publishConfig": {
+      "access": "public"
     },
     "author": {
         "name": "Index Labs Inc.",

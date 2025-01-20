@@ -35,8 +35,8 @@ type ApiConfig implements BaseConfig {
   body: String
   documentationUrl: String
   contentType: String
-  payloadSchema: JSONSchema
   responseSchema: JSONSchema!
+  responseMapping: JSONata!
   authentication: Authentication
   pagination: Pagination
   dataPath: String
