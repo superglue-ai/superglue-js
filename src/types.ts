@@ -1,3 +1,4 @@
+// HTTP methods supported by superglue
 export enum HttpMethod {
   GET = "GET",
   POST = "POST",
@@ -8,71 +9,79 @@ export enum HttpMethod {
   OPTIONS = "OPTIONS"
 }
 
+// Cache behavior configuration options
 export enum CacheMode {
-  ENABLED = "ENABLED",
-  READONLY = "READONLY",
-  WRITEONLY = "WRITEONLY",
-  DISABLED = "DISABLED"
+  ENABLED = "ENABLED",    // Read and write to cache
+  READONLY = "READONLY",  // Only read from cache
+  WRITEONLY = "WRITEONLY", // Only write to cache - mostly for debugging
+  DISABLED = "DISABLED"   // No caching
 }
 
+// Supported file formats for data extraction
 export enum FileType {
   CSV = "CSV",
   JSON = "JSON",
   XML = "XML",
-  AUTO = "AUTO"
+  AUTO = "AUTO"  // Automatically detect file type
 }
 
+// Authentication methods for API requests
 export enum AuthType {
-  NONE = "NONE",
-  OAUTH2 = "OAUTH2",
-  HEADER = "HEADER",
-  QUERY_PARAM = "QUERY_PARAM"
+  NONE = "NONE",           // No authentication
+  OAUTH2 = "OAUTH2",       // OAuth 2.0 authentication
+  HEADER = "HEADER",       // Authentication via headers
+  QUERY_PARAM = "QUERY_PARAM" // Authentication via query parameters
 }
 
+// Supported decompression methods for compressed data
 export enum DecompressionMethod {
   GZIP = "GZIP",
   DEFLATE = "DEFLATE",
   NONE = "NONE",
-  AUTO = "AUTO",
+  AUTO = "AUTO",  // Automatically detect compression
   ZIP = "ZIP"
 }
 
+// Pagination strategies
 export enum PaginationType {
-  OFFSET_BASED = "OFFSET_BASED",
-  PAGE_BASED = "PAGE_BASED",
-  DISABLED = "DISABLED"
+  OFFSET_BASED = "OFFSET_BASED", // Uses offset/limit parameters
+  PAGE_BASED = "PAGE_BASED",     // Uses page number/limit parameters
+  DISABLED = "DISABLED"          // No pagination
 }
 
+// Base configuration interface for all config types
 export interface BaseConfig {
-  id: string;
-  version?: string; 
-  createdAt: Date;
-  updatedAt: Date;
+  id: string;              // Unique identifier
+  version?: string;        // Optional version identifier
+  createdAt: Date;        // Creation timestamp
+  updatedAt: Date;        // Last update timestamp
 }
 
+// Base result interface for all operation results
 export interface BaseResult {
-  id: string;
-  success: boolean;
-  data?: any;
-  error?: string;
-  startedAt: Date;
-  completedAt: Date;
+  id: string;             // Unique identifier
+  success: boolean;       // Operation success status
+  data?: any;            // Optional response data
+  error?: string;        // Error message if operation failed
+  startedAt: Date;       // Operation start timestamp
+  completedAt: Date;     // Operation completion timestamp
 }
 
+// Configuration for API calls
 export interface ApiConfig extends BaseConfig {
-  url: string;
-  queryParams?: Record<string, any>;
-  instruction: string;
-  method: HttpMethod;
-  headers?: Record<string, string>;
-  body?: string;
-  documentationUrl?: string;
-  contentType?: string;
-  responseSchema: any;
-  responseMapping?: string;
-  authentication?: Authentication;
-  pagination?: Pagination;
-  dataPath?: string;
+  url: string;            // API endpoint URL
+  instruction: string;    // Natural language instruction
+  method: HttpMethod;     // HTTP method to use
+  queryParams?: Record<string, any>;  // Query parameters
+  headers?: Record<string, string>;   // HTTP headers
+  body?: string;          // Request body
+  documentationUrl?: string;          // API documentation URL
+  contentType?: string;   // Request content type
+  responseSchema?: any;   // Expected response schema
+  responseMapping?: string; // Response transformation mapping
+  authentication?: AuthType; // Authentication method
+  pagination?: Pagination;  // Pagination configuration
+  dataPath?: string;      // Path to data in response
 }
 
 export interface ExtractConfig extends BaseConfig {
@@ -85,7 +94,7 @@ export interface ExtractConfig extends BaseConfig {
   documentationUrl?: string;
   contentType?: string;
   decompressionMethod: DecompressionMethod;
-  authentication?: Authentication;
+  authentication?: AuthType;
   fileType?: FileType;
   dataPath?: string;
 }
@@ -94,11 +103,6 @@ export interface TransformConfig extends BaseConfig {
   responseSchema: any;
   responseMapping: string;
 }
-
-export type Authentication = {
-  type: AuthType;
-  format?: string;
-};
 
 export type Pagination = {
   type: PaginationType;
@@ -128,8 +132,23 @@ export type ApiInput = {
   documentationUrl?: string;
   responseSchema?: any;
   responseMapping?: any;
-  authentication?: Authentication;
+  authentication?: AuthType;
   version?: string;
+};
+
+export type ApiInputRequest = {
+  id?: string;
+  endpoint: ApiInput;
+};
+
+export type ExtractInputRequest = {
+  id?: string;
+  endpoint: ExtractInput;
+};
+
+export type TransformInputRequest = {
+  id?: string;
+  endpoint: TransformInput;
 };
 
 export type ExtractInput = {
@@ -142,7 +161,7 @@ export type ExtractInput = {
   contentType?: string;
   documentationUrl?: string;
   decompressionMethod?: DecompressionMethod;
-  authentication?: Authentication;
+  authentication?: AuthType;
   version?: string;
 };
 
@@ -153,20 +172,45 @@ export type TransformInput = {
   version?: string;
 };
 
+// Configuration options for API calls
 export type CallOptions = {
-  cacheMode?: CacheMode;
-  timeout?: number;
-  retries?: number;
-  retryDelay?: number;
-  webhookUrl?: string;
+  cacheMode?: CacheMode;     // Caching behavior
+  timeout?: number;          // Request timeout in milliseconds
+  retries?: number;          // Number of retry attempts
+  retryDelay?: number;       // Delay between retries in milliseconds
+  webhookUrl?: string;       // Webhook URL for async notifications
 };
 
+// List response for API call results
 export type ResultList = {
-  items: CallResult[];
-  total: number;
+  items: CallResult[];       // Array of call results
+  total: number;            // Total number of results
 };
 
+// List response for API configurations
 export type ConfigList = {
-  items: ApiConfig[];
-  total: number;
+  items: ApiConfig[];       // Array of API configs
+  total: number;           // Total number of configs
 };
+
+// Arguments for making an API call
+export interface ApiCallArgs {
+  id?: string;              // Optional config ID to use
+  endpoint?: ApiInput;      // API configuration
+  payload?: Record<string, unknown>;     // Request payload
+  credentials?: Record<string, unknown>; // Authentication credentials
+  options?: CallOptions;    // Call options
+}
+
+export interface TransformArgs {
+  id?: string;
+  endpoint: TransformInput;
+  data: Record<string, unknown>;
+  options?: CallOptions;
+}
+
+export interface ExtractArgs {
+  id?: string;
+  endpoint?: ExtractInput;
+  options?: CallOptions;
+}

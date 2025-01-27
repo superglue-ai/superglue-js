@@ -1,4 +1,5 @@
-import { ApiInput, CallOptions, CallResult, ExtractInput, ExtractResult, ResultList, TransformInput, TransformResult } from "./types";
+import axios from "axios";
+import { ApiCallArgs, CallResult, ExtractArgs, ExtractResult, TransformArgs, TransformResult } from "./types.js";
 
 export class SuperglueClient {
     private endpoint: string;
@@ -11,38 +12,31 @@ export class SuperglueClient {
     }
   
     private async request<T>(query: string, variables?: Record<string, any>): Promise<T> {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          query,
-          variables,
-        }),
-      });
-  
-      const json = await response.json();
-  
-      if (json.errors) {
-        throw new Error(json.errors[0].message);
-      }
-  
-      return json.data as T;
+        try { 
+            const response = await axios.post(this.endpoint, {
+                query,
+                variables,
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`,
+                }
+            });  
+            if(response.data.errors) {
+                throw new Error(response.data.errors[0].message);
+            }
+            const json = response.data;
+            return json.data as T;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
-  
     // Mutations
-    async call<T = any>(
-      endpoint: ApiInput,
-      payload?: any,
-      credentials?: any,
-      options?: CallOptions
-    ): Promise<CallResult & { data: T }> {
-
+    async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<CallResult & { data: T }> {
       const mutation = `
-        mutation Call($endpoint: ApiInput!, $payload: JSON, $credentials: JSON, $options: CallOptions) {
-          call(endpoint: $endpoint, payload: $payload, credentials: $credentials, options: $options) {
+        mutation Call($input: ApiInputRequest!, $payload: JSON, $credentials: JSON, $options: CallOptions) {
+          call(input: $input, payload: $payload, credentials: $credentials, options: $options) {
             id
             success
             data
@@ -59,22 +53,28 @@ export class SuperglueClient {
         }
       `;
   
-      return this.request<{ call: CallResult & { data: T } }>(mutation, {
-        endpoint,
+      const result = await this.request<{ call: CallResult & { data: T } }>(mutation, {
+        input: { id, endpoint },
         payload,
         credentials,
-        options,
-      }).then(data => data.call);
+        options
+      }).then(data => data?.call);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result;
     }
   
-    async extract<T = any>(
-      endpoint: ExtractInput,
-      credentials?: any,
-      options?: CallOptions
-    ): Promise<ExtractResult & { data: T }> {
+    async extract<T = any>({
+      id,
+      endpoint,
+      options
+    }: ExtractArgs): Promise<ExtractResult & { data: T }> {
       const mutation = `
-        mutation Extract($endpoint: ExtractInput!, $credentials: JSON, $options: CallOptions) {
-          extract(endpoint: $endpoint, credentials: $credentials, options: $options) {
+        mutation Extract($input: ExtractInputRequest!, $options: CallOptions) {
+          extract(input: $input, options: $options) {
             id
             success
             data
@@ -92,19 +92,19 @@ export class SuperglueClient {
       `;
   
       return this.request<{ extract: ExtractResult & { data: T } }>(mutation, {
-        endpoint,
-        credentials,
-        options,
+        input: { id, endpoint },
+        options
       }).then(data => data.extract);
     }
   
-    async transform<T = any>(
-      input: TransformInput,
-      data: any,
-      options?: CallOptions
-    ): Promise<TransformResult & { data: T }> {
+    async transform<T = any>({
+      id,
+      endpoint,
+      data,
+      options
+    }: TransformArgs): Promise<TransformResult & { data: T }> {
       const mutation = `
-        mutation Transform($input: TransformInput!, $data: JSON!, $options: CallOptions) {
+        mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: CallOptions) {
           transform(input: $input, data: $data, options: $options) {
             id
             success
@@ -113,6 +113,10 @@ export class SuperglueClient {
             startedAt
             completedAt
             config {
+              id
+              version
+              createdAt
+              updatedAt
               responseSchema
               responseMapping
             }
@@ -121,9 +125,9 @@ export class SuperglueClient {
       `;
   
       return this.request<{ transform: TransformResult & { data: T } }>(mutation, {
-        input,
+        input: { id, endpoint },
         data,
-        options,
+        options
       }).then(data => data.transform);
     }
   }

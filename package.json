@@ -4,15 +4,15 @@
     "main": "dist/superglue.js",
     "types": "dist/superglue.d.ts",
     "files": [
-      "dist"
+        "dist"
     ],
     "license": "Apache-2.0",
     "scripts": {
-      "build": "tsc",
-      "prepare": "npm run build"
+        "build": "tsc",
+        "prepare": "npm run build"
     },
     "publishConfig": {
-      "access": "public"
+        "access": "public"
     },
     "author": {
         "name": "Index Labs Inc.",
@@ -28,6 +28,9 @@
         "url": "https://github.com/superglue-ai/superglue-js/issues"
     },
     "devDependencies": {
-      "typescript": "^5.0.0"
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "axios": "^1.7.9"
     }
 }

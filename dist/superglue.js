@@ -1,34 +1,42 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuperglueClient = void 0;
+const axios_1 = __importDefault(require("axios"));
 class SuperglueClient {
     constructor({ endpoint, apiKey }) {
         this.endpoint = endpoint !== null && endpoint !== void 0 ? endpoint : 'https://graphql.superglue.cloud';
         this.apiKey = apiKey;
     }
     async request(query, variables) {
-        const response = await fetch(this.endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.apiKey}`,
-            },
-            body: JSON.stringify({
+        try {
+            const response = await axios_1.default.post(this.endpoint, {
                 query,
                 variables,
-            }),
-        });
-        const json = await response.json();
-        if (json.errors) {
-            throw new Error(json.errors[0].message);
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`,
+                }
+            });
+            if (response.data.errors) {
+                throw new Error(response.data.errors[0].message);
+            }
+            const json = response.data;
+            return json.data;
         }
-        return json.data;
+        catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
     // Mutations
-    async call(endpoint, payload, credentials, options) {
+    async call({ id, endpoint, payload, credentials, options }) {
         const mutation = `
-        mutation Call($endpoint: ApiInput!, $payload: JSON, $credentials: JSON, $options: CallOptions) {
-          call(endpoint: $endpoint, payload: $payload, credentials: $credentials, options: $options) {
+        mutation Call($input: ApiInputRequest!, $payload: JSON, $credentials: JSON, $options: CallOptions) {
+          call(input: $input, payload: $payload, credentials: $credentials, options: $options) {
             id
             success
             data
@@ -44,17 +52,21 @@ class SuperglueClient {
           }
         }
       `;
-        return this.request(mutation, {
-            endpoint,
+        const result = await this.request(mutation, {
+            input: { id, endpoint },
             payload,
             credentials,
-            options,
-        }).then(data => data.call);
+            options
+        }).then(data => data === null || data === void 0 ? void 0 : data.call);
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        return result;
     }
-    async extract(endpoint, credentials, options) {
+    async extract({ id, endpoint, options }) {
         const mutation = `
-        mutation Extract($endpoint: ExtractInput!, $credentials: JSON, $options: CallOptions) {
-          extract(endpoint: $endpoint, credentials: $credentials, options: $options) {
+        mutation Extract($input: ExtractInputRequest!, $options: CallOptions) {
+          extract(input: $input, options: $options) {
             id
             success
             data
@@ -71,14 +83,13 @@ class SuperglueClient {
         }
       `;
         return this.request(mutation, {
-            endpoint,
-            credentials,
-            options,
+            input: { id, endpoint },
+            options
         }).then(data => data.extract);
     }
-    async transform(input, data, options) {
+    async transform({ id, endpoint, data, options }) {
         const mutation = `
-        mutation Transform($input: TransformInput!, $data: JSON!, $options: CallOptions) {
+        mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: CallOptions) {
           transform(input: $input, data: $data, options: $options) {
             id
             success
@@ -87,6 +98,10 @@ class SuperglueClient {
             startedAt
             completedAt
             config {
+              id
+              version
+              createdAt
+              updatedAt
               responseSchema
               responseMapping
             }
@@ -94,9 +109,9 @@ class SuperglueClient {
         }
       `;
         return this.request(mutation, {
-            input,
+            input: { id, endpoint },
             data,
-            options,
+            options
         }).then(data => data.transform);
     }
 }

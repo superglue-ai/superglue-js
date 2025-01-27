@@ -1,4 +1,4 @@
-import { ApiInput, CallOptions, CallResult, ExtractInput, ExtractResult, TransformInput, TransformResult } from "./types";
+import { ApiCallArgs, CallResult, ExtractArgs, ExtractResult, TransformArgs, TransformResult } from "./types.js";
 export declare class SuperglueClient {
     private endpoint;
     private apiKey;
@@ -7,13 +7,13 @@ export declare class SuperglueClient {
         apiKey: string;
     });
     private request;
-    call<T = any>(endpoint: ApiInput, payload?: any, credentials?: any, options?: CallOptions): Promise<CallResult & {
+    call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<CallResult & {
         data: T;
     }>;
-    extract<T = any>(endpoint: ExtractInput, credentials?: any, options?: CallOptions): Promise<ExtractResult & {
+    extract<T = any>({ id, endpoint, options }: ExtractArgs): Promise<ExtractResult & {
         data: T;
     }>;
-    transform<T = any>(input: TransformInput, data: any, options?: CallOptions): Promise<TransformResult & {
+    transform<T = any>({ id, endpoint, data, options }: TransformArgs): Promise<TransformResult & {
         data: T;
     }>;
 }
