@@ -1,6 +1,6 @@
 {
     "name": "@superglue/superglue",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "main": "dist/superglue.js",
     "types": "dist/superglue.d.ts",
     "files": [
