@@ -3,8 +3,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SuperglueClient = void 0;
+exports.SuperglueClient = exports.PaginationType = exports.DecompressionMethod = exports.AuthType = exports.FileType = exports.CacheMode = exports.HttpMethod = void 0;
 const axios_1 = __importDefault(require("axios"));
+var HttpMethod;
+(function (HttpMethod) {
+    HttpMethod["GET"] = "GET";
+    HttpMethod["POST"] = "POST";
+    HttpMethod["PUT"] = "PUT";
+    HttpMethod["DELETE"] = "DELETE";
+    HttpMethod["PATCH"] = "PATCH";
+    HttpMethod["HEAD"] = "HEAD";
+    HttpMethod["OPTIONS"] = "OPTIONS";
+})(HttpMethod || (exports.HttpMethod = HttpMethod = {}));
+var CacheMode;
+(function (CacheMode) {
+    CacheMode["ENABLED"] = "ENABLED";
+    CacheMode["READONLY"] = "READONLY";
+    CacheMode["WRITEONLY"] = "WRITEONLY";
+    CacheMode["DISABLED"] = "DISABLED";
+})(CacheMode || (exports.CacheMode = CacheMode = {}));
+var FileType;
+(function (FileType) {
+    FileType["CSV"] = "CSV";
+    FileType["JSON"] = "JSON";
+    FileType["XML"] = "XML";
+    FileType["AUTO"] = "AUTO";
+})(FileType || (exports.FileType = FileType = {}));
+var AuthType;
+(function (AuthType) {
+    AuthType["NONE"] = "NONE";
+    AuthType["OAUTH2"] = "OAUTH2";
+    AuthType["HEADER"] = "HEADER";
+    AuthType["QUERY_PARAM"] = "QUERY_PARAM";
+})(AuthType || (exports.AuthType = AuthType = {}));
+var DecompressionMethod;
+(function (DecompressionMethod) {
+    DecompressionMethod["GZIP"] = "GZIP";
+    DecompressionMethod["DEFLATE"] = "DEFLATE";
+    DecompressionMethod["NONE"] = "NONE";
+    DecompressionMethod["AUTO"] = "AUTO";
+    DecompressionMethod["ZIP"] = "ZIP";
+})(DecompressionMethod || (exports.DecompressionMethod = DecompressionMethod = {}));
+var PaginationType;
+(function (PaginationType) {
+    PaginationType["OFFSET_BASED"] = "OFFSET_BASED";
+    PaginationType["PAGE_BASED"] = "PAGE_BASED";
+    PaginationType["DISABLED"] = "DISABLED";
+})(PaginationType || (exports.PaginationType = PaginationType = {}));
 class SuperglueClient {
     constructor({ endpoint, apiKey }) {
         this.endpoint = endpoint !== null && endpoint !== void 0 ? endpoint : 'https://graphql.superglue.cloud';
