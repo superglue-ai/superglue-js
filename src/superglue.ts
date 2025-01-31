@@ -181,15 +181,15 @@ export type ConfigList = {
 export interface ApiCallArgs {
   id?: string;              // Optional config ID to use
   endpoint?: ApiInput;      // API configuration
-  payload?: Record<string, unknown>;     // Request payload
-  credentials?: Record<string, unknown>; // Authentication credentials
+  payload?: Record<string, any>;     // Request payload
+  credentials?: Record<string, any>; // Authentication credentials
   options?: RequestOptions;    // Call options
 }
 
 export interface TransformArgs {
   id?: string;
   endpoint: TransformInput;
-  data: Record<string, unknown>;
+  data: Record<string, any>;
   options?: RequestOptions;
 }
 
@@ -562,7 +562,7 @@ export class SuperglueClient {
       return response.getExtract;
     }
 
-    async upsertApi(id: string, input: Record<string, unknown>): Promise<ApiConfig> {
+    async upsertApi(id: string, input: Record<string, any>): Promise<ApiConfig> {
       const mutation = `
         mutation UpsertApi($id: ID!, $input: JSON!) {
           upsertApi(id: $id, input: $input) {
@@ -603,7 +603,7 @@ export class SuperglueClient {
       return response.deleteApi;
     }
 
-    async createApi(input: Record<string, unknown>): Promise<ApiConfig> {
+    async createApi(input: Record<string, any>): Promise<ApiConfig> {
       const mutation = `
         mutation CreateApi($input: JSON!) {
           createApi(input: $input) {
@@ -634,7 +634,7 @@ export class SuperglueClient {
       return response.createApi;
     }
 
-    async upsertExtraction(id: string, input: Record<string, unknown>): Promise<ExtractConfig> {
+    async upsertExtraction(id: string, input: Record<string, any>): Promise<ExtractConfig> {
       const mutation = `
         mutation UpsertExtraction($id: ID!, $input: JSON!) {
           upsertExtraction(id: $id, input: $input) {
@@ -671,7 +671,7 @@ export class SuperglueClient {
       return response.deleteExtraction;
     }
 
-    async upsertTransformation(id: string, input: Record<string, unknown>): Promise<TransformConfig> {
+    async upsertTransformation(id: string, input: Record<string, any>): Promise<TransformConfig> {
       const mutation = `
         mutation UpsertTransformation($id: ID!, $input: JSON!) {
           upsertTransformation(id: $id, input: $input) {
