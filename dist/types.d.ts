@@ -8,9 +8,9 @@ export declare enum HttpMethod {
     OPTIONS = "OPTIONS"
 }
 export declare enum CacheMode {
-    ENABLED = "ENABLED",// Read and write to cache
-    READONLY = "READONLY",// Only read from cache
-    WRITEONLY = "WRITEONLY",// Only write to cache - mostly for debugging
+    ENABLED = "ENABLED",
+    READONLY = "READONLY",
+    WRITEONLY = "WRITEONLY",
     DISABLED = "DISABLED"
 }
 export declare enum FileType {
@@ -20,28 +20,28 @@ export declare enum FileType {
     AUTO = "AUTO"
 }
 export declare enum AuthType {
-    NONE = "NONE",// No authentication
-    OAUTH2 = "OAUTH2",// OAuth 2.0 authentication
-    HEADER = "HEADER",// Authentication via headers
+    NONE = "NONE",
+    OAUTH2 = "OAUTH2",
+    HEADER = "HEADER",
     QUERY_PARAM = "QUERY_PARAM"
 }
 export declare enum DecompressionMethod {
     GZIP = "GZIP",
     DEFLATE = "DEFLATE",
     NONE = "NONE",
-    AUTO = "AUTO",// Automatically detect compression
+    AUTO = "AUTO",
     ZIP = "ZIP"
 }
 export declare enum PaginationType {
-    OFFSET_BASED = "OFFSET_BASED",// Uses offset/limit parameters
-    PAGE_BASED = "PAGE_BASED",// Uses page number/limit parameters
+    OFFSET_BASED = "OFFSET_BASED",
+    PAGE_BASED = "PAGE_BASED",
     DISABLED = "DISABLED"
 }
 export interface BaseConfig {
     id: string;
     version?: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 export interface BaseResult {
     id: string;
@@ -52,14 +52,14 @@ export interface BaseResult {
     completedAt: Date;
 }
 export interface ApiConfig extends BaseConfig {
-    url: string;
+    urlHost: string;
+    urlPath?: string;
     instruction: string;
-    method: HttpMethod;
+    method?: HttpMethod;
     queryParams?: Record<string, any>;
-    headers?: Record<string, string>;
+    headers?: Record<string, any>;
     body?: string;
     documentationUrl?: string;
-    contentType?: string;
     responseSchema?: any;
     responseMapping?: string;
     authentication?: AuthType;
@@ -67,15 +67,15 @@ export interface ApiConfig extends BaseConfig {
     dataPath?: string;
 }
 export interface ExtractConfig extends BaseConfig {
-    url: string;
-    queryParams?: Record<string, any>;
+    urlHost: string;
+    urlPath?: string;
     instruction: string;
-    method: HttpMethod;
-    headers?: Record<string, string>;
+    queryParams?: Record<string, any>;
+    method?: HttpMethod;
+    headers?: Record<string, any>;
     body?: string;
     documentationUrl?: string;
-    contentType?: string;
-    decompressionMethod: DecompressionMethod;
+    decompressionMethod?: DecompressionMethod;
     authentication?: AuthType;
     fileType?: FileType;
     dataPath?: string;
@@ -88,27 +88,23 @@ export type Pagination = {
     type: PaginationType;
     pageSize?: number;
 };
-export type CallResult = BaseResult & {
-    config: ApiConfig;
-};
-export type ExtractResult = BaseResult & {
-    config: ExtractConfig;
-};
-export type TransformResult = BaseResult & {
-    config: TransformConfig;
+export type RunResult = BaseResult & {
+    config: ApiConfig | ExtractConfig | TransformConfig;
 };
 export type ApiInput = {
-    url: string;
+    urlHost: string;
+    urlPath?: string;
     queryParams?: Record<string, any>;
     instruction: string;
     method?: HttpMethod;
-    headers?: Record<string, string>;
+    headers?: Record<string, any>;
     body?: string;
-    contentType?: string;
     documentationUrl?: string;
     responseSchema?: any;
     responseMapping?: any;
     authentication?: AuthType;
+    pagination?: Pagination;
+    dataPath?: string;
     version?: string;
 };
 export type ApiInputRequest = {
@@ -124,13 +120,13 @@ export type TransformInputRequest = {
     endpoint: TransformInput;
 };
 export type ExtractInput = {
-    url: string;
+    urlHost: string;
+    urlPath?: string;
     queryParams?: Record<string, any>;
     instruction: string;
     method?: HttpMethod;
-    headers?: Record<string, string>;
+    headers?: Record<string, any>;
     body?: string;
-    contentType?: string;
     documentationUrl?: string;
     decompressionMethod?: DecompressionMethod;
     authentication?: AuthType;
@@ -142,7 +138,7 @@ export type TransformInput = {
     responseMapping?: string;
     version?: string;
 };
-export type CallOptions = {
+export type RequestOptions = {
     cacheMode?: CacheMode;
     timeout?: number;
     retries?: number;
@@ -150,7 +146,7 @@ export type CallOptions = {
     webhookUrl?: string;
 };
 export type ResultList = {
-    items: CallResult[];
+    items: RunResult[];
     total: number;
 };
 export type ConfigList = {
@@ -162,17 +158,17 @@ export interface ApiCallArgs {
     endpoint?: ApiInput;
     payload?: Record<string, unknown>;
     credentials?: Record<string, unknown>;
-    options?: CallOptions;
+    options?: RequestOptions;
 }
 export interface TransformArgs {
     id?: string;
     endpoint: TransformInput;
     data: Record<string, unknown>;
-    options?: CallOptions;
+    options?: RequestOptions;
 }
 export interface ExtractArgs {
     id?: string;
     endpoint?: ExtractInput;
-    options?: CallOptions;
+    options?: RequestOptions;
 }
 //# sourceMappingURL=types.d.ts.map

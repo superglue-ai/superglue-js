@@ -32,10 +32,9 @@ class SuperglueClient {
             throw error;
         }
     }
-    // Mutations
     async call({ id, endpoint, payload, credentials, options }) {
         const mutation = `
-        mutation Call($input: ApiInputRequest!, $payload: JSON, $credentials: JSON, $options: CallOptions) {
+        mutation Call($input: ApiInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
           call(input: $input, payload: $payload, credentials: $credentials, options: $options) {
             id
             success
@@ -43,12 +42,7 @@ class SuperglueClient {
             error
             startedAt
             completedAt
-            config {
-              id
-              url
-              instruction
-              method
-            }
+            ${SuperglueClient.configQL}
           }
         }
       `;
@@ -65,7 +59,7 @@ class SuperglueClient {
     }
     async extract({ id, endpoint, options }) {
         const mutation = `
-        mutation Extract($input: ExtractInputRequest!, $options: CallOptions) {
+        mutation Extract($input: ExtractInputRequest!, $options: RequestOptions) {
           extract(input: $input, options: $options) {
             id
             success
@@ -73,12 +67,7 @@ class SuperglueClient {
             error
             startedAt
             completedAt
-            config {
-              id
-              url
-              instruction
-              method
-            }
+            ${SuperglueClient.configQL}
           }
         }
       `;
@@ -89,7 +78,7 @@ class SuperglueClient {
     }
     async transform({ id, endpoint, data, options }) {
         const mutation = `
-        mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: CallOptions) {
+        mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: RequestOptions) {
           transform(input: $input, data: $data, options: $options) {
             id
             success
@@ -97,14 +86,7 @@ class SuperglueClient {
             error
             startedAt
             completedAt
-            config {
-              id
-              version
-              createdAt
-              updatedAt
-              responseSchema
-              responseMapping
-            }
+            ${SuperglueClient.configQL}
           }
         }
       `;
@@ -114,8 +96,379 @@ class SuperglueClient {
             options
         }).then(data => data.transform);
     }
+    async listRuns(limit = 100, offset = 0) {
+        const query = `
+        query ListRuns($limit: Int!, $offset: Int!) {
+          listRuns(limit: $limit, offset: $offset) {
+            items {
+              id
+              success
+              data
+              error
+              startedAt
+              completedAt
+              ${SuperglueClient.configQL}
+            }
+            total
+          }
+        }
+      `;
+        const response = await this.request(query, { limit, offset });
+        return response.listRuns;
+    }
+    async getRun(id) {
+        const query = `
+        query GetRun($id: ID!) {
+          getRun(id: $id) {
+            id
+            success
+            data
+            error
+            startedAt
+            completedAt
+            ${SuperglueClient.configQL}
+          }
+        }
+      `;
+        const response = await this.request(query, { id });
+        return response.getRun;
+    }
+    async listApis(limit = 10, offset = 0) {
+        const query = `
+        query ListApis($limit: Int!, $offset: Int!) {
+          listApis(limit: $limit, offset: $offset) {
+            items {
+              id
+              version
+              createdAt
+              updatedAt
+              urlHost
+              urlPath
+              instruction
+              method
+              queryParams
+              headers
+              body
+              documentationUrl
+              responseSchema
+              responseMapping
+              authentication
+              pagination {
+                type
+                pageSize
+              }
+              dataPath
+            }
+            total
+          }
+        }
+      `;
+        const response = await this.request(query, { limit, offset });
+        return response.listApis;
+    }
+    async listTransforms(limit = 10, offset = 0) {
+        const query = `
+        query ListTransforms($limit: Int!, $offset: Int!) {
+          listTransforms(limit: $limit, offset: $offset) {
+            items {
+              id
+              version
+              createdAt
+              updatedAt
+              responseSchema
+              responseMapping
+            }
+            total
+          }
+        }
+      `;
+        const response = await this.request(query, { limit, offset });
+        return response.listTransforms;
+    }
+    async listExtracts(limit = 10, offset = 0) {
+        const query = `
+        query ListExtracts($limit: Int!, $offset: Int!) {
+          listExtracts(limit: $limit, offset: $offset) {
+            items {
+              id
+              version
+              createdAt
+              updatedAt
+              urlHost
+              urlPath
+              instruction
+              queryParams
+              method
+              headers
+              body
+              documentationUrl
+              decompressionMethod
+              authentication
+              fileType
+              dataPath
+            }
+            total
+          }
+        }
+      `;
+        const response = await this.request(query, { limit, offset });
+        return response.listExtracts;
+    }
+    async getApi(id) {
+        const query = `
+        query GetApi($id: ID!) {
+          getApi(id: $id) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+            }
+            dataPath
+          }
+        }
+      `;
+        const response = await this.request(query, { id });
+        return response.getApi;
+    }
+    async getTransform(id) {
+        const query = `
+        query GetTransform($id: ID!) {
+          getTransform(id: $id) {
+            id
+            version
+            createdAt
+            updatedAt
+            responseSchema
+            responseMapping
+          }
+        }
+      `;
+        const response = await this.request(query, { id });
+        return response.getTransform;
+    }
+    async getExtract(id) {
+        const query = `
+        query GetExtract($id: ID!) {
+          getExtract(id: $id) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            queryParams
+            method
+            headers
+            body
+            documentationUrl
+            decompressionMethod
+            authentication
+            fileType
+            dataPath
+          }
+        }
+      `;
+        const response = await this.request(query, { id });
+        return response.getExtract;
+    }
+    async upsertApi(id, input) {
+        const mutation = `
+        mutation UpsertApi($id: ID!, $input: JSON!) {
+          upsertApi(id: $id, input: $input) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+            }
+            dataPath
+          }
+        }
+      `;
+        const response = await this.request(mutation, { id, input });
+        return response.upsertApi;
+    }
+    async deleteApi(id) {
+        const mutation = `
+        mutation DeleteApi($id: ID!) {
+          deleteApi(id: $id)
+        }
+      `;
+        const response = await this.request(mutation, { id });
+        return response.deleteApi;
+    }
+    async createApi(input) {
+        const mutation = `
+        mutation CreateApi($input: JSON!) {
+          createApi(input: $input) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+            }
+            dataPath
+          }
+        }
+      `;
+        const response = await this.request(mutation, { input });
+        return response.createApi;
+    }
+    async upsertExtraction(id, input) {
+        const mutation = `
+        mutation UpsertExtraction($id: ID!, $input: JSON!) {
+          upsertExtraction(id: $id, input: $input) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            queryParams
+            method
+            headers
+            body
+            documentationUrl
+            decompressionMethod
+            authentication
+            fileType
+            dataPath
+          }
+        }
+      `;
+        const response = await this.request(mutation, { id, input });
+        return response.upsertExtraction;
+    }
+    async deleteExtraction(id) {
+        const mutation = `
+        mutation DeleteExtraction($id: ID!) {
+          deleteExtraction(id: $id)
+        }
+      `;
+        const response = await this.request(mutation, { id });
+        return response.deleteExtraction;
+    }
+    async upsertTransformation(id, input) {
+        const mutation = `
+        mutation UpsertTransformation($id: ID!, $input: JSON!) {
+          upsertTransformation(id: $id, input: $input) {
+            id
+            version
+            createdAt
+            updatedAt
+            responseSchema
+            responseMapping
+          }
+        }
+      `;
+        const response = await this.request(mutation, { id, input });
+        return response.upsertTransformation;
+    }
+    async deleteTransformation(id) {
+        const mutation = `
+        mutation DeleteTransformation($id: ID!) {
+          deleteTransformation(id: $id)
+        }
+      `;
+        const response = await this.request(mutation, { id });
+        return response.deleteTransformation;
+    }
 }
 exports.SuperglueClient = SuperglueClient;
+SuperglueClient.configQL = `
+    config {
+      ... on ApiConfig {
+        id
+        version
+        createdAt
+        updatedAt
+        urlHost
+        urlPath
+        instruction
+        method
+        queryParams
+        headers
+        body
+        documentationUrl
+        responseSchema
+        responseMapping
+        authentication
+        pagination {
+          type
+          pageSize
+        }
+        dataPath
+      }
+      ... on ExtractConfig {
+        id
+        version
+        createdAt
+        updatedAt
+        urlHost
+        urlPath
+        instruction
+        queryParams
+        method
+        headers
+        body
+        documentationUrl
+        decompressionMethod
+        authentication
+        fileType
+        dataPath
+      }
+      ... on TransformConfig {
+        id
+        version
+        createdAt
+        updatedAt
+        responseSchema
+        responseMapping
+      }
+    }
+    `;
 // Usage example:
 /*
 const client = new SuperglueClient({
