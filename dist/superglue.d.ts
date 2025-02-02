@@ -156,14 +156,14 @@ export type ConfigList = {
 export interface ApiCallArgs {
     id?: string;
     endpoint?: ApiInput;
-    payload?: Record<string, unknown>;
-    credentials?: Record<string, unknown>;
+    payload?: Record<string, any>;
+    credentials?: Record<string, any>;
     options?: RequestOptions;
 }
 export interface TransformArgs {
     id?: string;
     endpoint: TransformInput;
-    data: Record<string, unknown>;
+    data: Record<string, any>;
     options?: RequestOptions;
 }
 export interface ExtractArgs {
@@ -209,12 +209,12 @@ export declare class SuperglueClient {
     getApi(id: string): Promise<ApiConfig>;
     getTransform(id: string): Promise<TransformConfig>;
     getExtract(id: string): Promise<ExtractConfig>;
-    upsertApi(id: string, input: Record<string, unknown>): Promise<ApiConfig>;
+    upsertApi(id: string, input: Record<string, any>): Promise<ApiConfig>;
     deleteApi(id: string): Promise<boolean>;
-    createApi(input: Record<string, unknown>): Promise<ApiConfig>;
-    upsertExtraction(id: string, input: Record<string, unknown>): Promise<ExtractConfig>;
+    createApi(input: Record<string, any>): Promise<ApiConfig>;
+    upsertExtraction(id: string, input: Record<string, any>): Promise<ExtractConfig>;
     deleteExtraction(id: string): Promise<boolean>;
-    upsertTransformation(id: string, input: Record<string, unknown>): Promise<TransformConfig>;
+    upsertTransformation(id: string, input: Record<string, any>): Promise<TransformConfig>;
     deleteTransformation(id: string): Promise<boolean>;
 }
 //# sourceMappingURL=superglue.d.ts.map

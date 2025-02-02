@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 export enum HttpMethod {
   GET = "GET",
   POST = "POST",
@@ -706,9 +707,12 @@ export class SuperglueClient {
   });
   
   // Make a call
-  const result = await client.call({
-    url: 'https://api.example.com',
-    instruction: 'Fetch data'
-  });
+  const config = {
+    urlHost: "https://futuramaapi.com",
+    urlPath: "/graphql",
+    instruction: "get all characters from the show",
+  };
+  
+  const result = await client.call({endpoint: config});
   */
   
