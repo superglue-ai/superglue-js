@@ -604,37 +604,6 @@ export class SuperglueClient {
       return response.deleteApi;
     }
 
-    async createApi(input: Record<string, any>): Promise<ApiConfig> {
-      const mutation = `
-        mutation CreateApi($input: JSON!) {
-          createApi(input: $input) {
-            id
-            version
-            createdAt
-            updatedAt
-            urlHost
-            urlPath
-            instruction
-            method
-            queryParams
-            headers
-            body
-            documentationUrl
-            responseSchema
-            responseMapping
-            authentication
-            pagination {
-              type
-              pageSize
-            }
-            dataPath
-          }
-        }
-      `;
-      const response = await this.request<{ createApi: ApiConfig }>(mutation, { input });
-      return response.createApi;
-    }
-
     async upsertExtraction(id: string, input: Record<string, any>): Promise<ExtractConfig> {
       const mutation = `
         mutation UpsertExtraction($id: ID!, $input: JSON!) {
