@@ -365,10 +365,10 @@ export class SuperglueClient {
       }).then(data => data.transform);
     }
 
-    async listRuns(limit: number = 100, offset: number = 0): Promise<{ items: RunResult[], total: number }> {
+    async listRuns(limit: number = 100, offset: number = 0, configId?: string): Promise<{ items: RunResult[], total: number }> {
       const query = `
-        query ListRuns($limit: Int!, $offset: Int!) {
-          listRuns(limit: $limit, offset: $offset) {
+        query ListRuns($limit: Int!, $offset: Int!, $configId: ID) {
+          listRuns(limit: $limit, offset: $offset, configId: $configId) {
             items {
               id
               success
@@ -382,7 +382,7 @@ export class SuperglueClient {
           }
         }
       `;
-      const response = await this.request<{ listRuns: { items: RunResult[], total: number } }>(query, { limit, offset }); 
+      const response = await this.request<{ listRuns: { items: RunResult[], total: number } }>(query, { limit, offset, configId }); 
       return response.listRuns;
     }
 
