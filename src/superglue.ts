@@ -667,6 +667,17 @@ export class SuperglueClient {
       const response = await this.request<{ deleteTransformation: boolean }>(mutation, { id });
       return response.deleteTransformation;
     }
+
+    async generateSchema(instruction: string, responseData: string): Promise<any> {
+      const query = `
+        query GenerateSchema($instruction: String!, $responseData: String) {
+          generateSchema(instruction: $instruction, responseData: $responseData)
+        }
+      `;
+      const response = await this.request<{ generateSchema: string }>(query, { instruction, responseData });
+      return response.generateSchema;
+    }
+
 }
   
   // Usage example:
