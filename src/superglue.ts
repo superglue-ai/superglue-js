@@ -197,6 +197,7 @@ export interface TransformArgs {
 export interface ExtractArgs {
   id?: string;
   endpoint?: ExtractInput;
+  file?: File | Blob;
   options?: RequestOptions;
 }
 
@@ -316,6 +317,7 @@ export class SuperglueClient {
     async extract<T = any>({
       id,
       endpoint,
+      file,
       options
     }: ExtractArgs): Promise<RunResult & { data: T }> {
       const mutation = `
@@ -331,7 +333,34 @@ export class SuperglueClient {
           }
         }
       `;
-  
+
+      if (file) {
+        const operations = {
+          query: mutation,
+          variables: { 
+            input: { file: null },
+            options 
+          }
+        };
+
+        const formData = new FormData();
+        formData.append('operations', JSON.stringify(operations));
+        formData.append('map', JSON.stringify({ "0": ["variables.input.file"] }));
+        formData.append('0', file);
+
+        const response = await axios.post(this.endpoint, formData, {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+          }
+        });
+
+        if (response.data.errors) {
+          throw new Error(response.data.errors[0].message);
+        }
+
+        return response.data.data.extract;
+      }
+
       return this.request<{ extract: RunResult & { data: T } }>(mutation, {
         input: { id, endpoint },
         options
