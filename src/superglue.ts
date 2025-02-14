@@ -189,8 +189,8 @@ export interface ApiCallArgs {
 
 export interface TransformArgs {
   id?: string;
-  endpoint: TransformInput;
-  data: Record<string, any>;
+  endpoint?: TransformInput;
+  data?: Record<string, any>;
   options?: RequestOptions;
 }
 
