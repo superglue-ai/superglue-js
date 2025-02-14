@@ -136,7 +136,7 @@ export type ExtractInputRequest = {
 
 export type TransformInputRequest = {
   id?: string;
-  endpoint: TransformInput;
+  endpoint?: TransformInput;
 };
 
 export type ExtractInput = {
@@ -190,7 +190,7 @@ export interface ApiCallArgs {
 export interface TransformArgs {
   id?: string;
   endpoint?: TransformInput;
-  data?: Record<string, any>;
+  data: Record<string, any>;
   options?: RequestOptions;
 }
 
