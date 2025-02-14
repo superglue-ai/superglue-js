@@ -600,7 +600,7 @@ export class SuperglueClient {
       return response.getExtract;
     }
 
-    async upsertApi(id: string, input: Record<string, any>): Promise<ApiConfig> {
+    async upsertApi(id: string, input: Partial<ApiConfig>): Promise<ApiConfig> {
       const mutation = `
         mutation UpsertApi($id: ID!, $input: JSON!) {
           upsertApi(id: $id, input: $input) {
@@ -641,7 +641,7 @@ export class SuperglueClient {
       return response.deleteApi;
     }
 
-    async upsertExtraction(id: string, input: Record<string, any>): Promise<ExtractConfig> {
+    async upsertExtraction(id: string, input: Partial<ExtractConfig>): Promise<ExtractConfig> {
       const mutation = `
         mutation UpsertExtraction($id: ID!, $input: JSON!) {
           upsertExtraction(id: $id, input: $input) {
@@ -678,7 +678,7 @@ export class SuperglueClient {
       return response.deleteExtraction;
     }
 
-    async upsertTransformation(id: string, input: Record<string, any>): Promise<TransformConfig> {
+    async upsertTransformation(id: string, input: Partial<TransformConfig>): Promise<TransformConfig> {
       const mutation = `
         mutation UpsertTransformation($id: ID!, $input: JSON!) {
           upsertTransformation(id: $id, input: $input) {
