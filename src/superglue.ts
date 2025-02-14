@@ -199,6 +199,8 @@ export interface ExtractArgs {
   endpoint?: ExtractInput;
   file?: File | Blob;
   options?: RequestOptions;
+  payload?: Record<string, any>;
+  credentials?: Record<string, any>;
 }
 
 export class SuperglueClient {
@@ -318,11 +320,13 @@ export class SuperglueClient {
       id,
       endpoint,
       file,
+      payload,
+      credentials,    
       options
     }: ExtractArgs): Promise<RunResult & { data: T }> {
       const mutation = `
-        mutation Extract($input: ExtractInputRequest!, $options: RequestOptions) {
-          extract(input: $input, options: $options) {
+        mutation Extract($input: ExtractInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
+          extract(input: $input, payload: $payload, credentials: $credentials, options: $options) {
             id
             success
             data
@@ -339,10 +343,12 @@ export class SuperglueClient {
           query: mutation,
           variables: { 
             input: { file: null },
+            payload,
+            credentials,
             options 
           }
         };
-
+    
         const formData = new FormData();
         formData.append('operations', JSON.stringify(operations));
         formData.append('map', JSON.stringify({ "0": ["variables.input.file"] }));
@@ -363,6 +369,8 @@ export class SuperglueClient {
 
       return this.request<{ extract: RunResult & { data: T } }>(mutation, {
         input: { id, endpoint },
+        payload,
+        credentials,
         options
       }).then(data => data.extract);
     }
