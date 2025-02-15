@@ -94,6 +94,7 @@ export interface ExtractConfig extends BaseConfig {
 }
 
 export interface TransformConfig extends BaseConfig {
+  instruction: string;
   responseSchema: any;
   responseMapping: string;
 }
@@ -486,6 +487,7 @@ export class SuperglueClient {
               updatedAt
               responseSchema
               responseMapping
+              instruction
             }
             total
           }
@@ -566,6 +568,7 @@ export class SuperglueClient {
             updatedAt
             responseSchema
             responseMapping
+            instruction
           }
         }
       `;
@@ -688,6 +691,7 @@ export class SuperglueClient {
             updatedAt
             responseSchema
             responseMapping
+            instruction
           }
         }
       `;
