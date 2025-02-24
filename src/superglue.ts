@@ -76,6 +76,7 @@ export interface ApiConfig extends BaseConfig {
   authentication?: AuthType;
   pagination?: Pagination;
   dataPath?: string;
+  maxRateLimitWaitSec?: number;
 }
 
 export interface ExtractConfig extends BaseConfig {
@@ -123,6 +124,7 @@ export type ApiInput = {
   pagination?: Pagination;
   dataPath?: string;
   version?: string;
+  maxRateLimitWaitSec?: number;
 };
 
 export type ApiInputRequest = {
@@ -231,6 +233,7 @@ export class SuperglueClient {
           pageSize
         }
         dataPath
+        maxRateLimitWaitSec
       }
       ... on ExtractConfig {
         id
@@ -467,6 +470,7 @@ export class SuperglueClient {
                 pageSize
               }
               dataPath
+              maxRateLimitWaitSec
             }
             total
           }
@@ -551,6 +555,7 @@ export class SuperglueClient {
               pageSize
             }
             dataPath
+            maxRateLimitWaitSec
           }
         }
       `;
@@ -627,6 +632,7 @@ export class SuperglueClient {
               pageSize
             }
             dataPath
+            maxRateLimitWaitSec
           }
         }
       `;
