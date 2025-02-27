@@ -709,6 +709,37 @@ export class SuperglueClient {
       return response.deleteTransformation;
     }
 
+    async updateApiConfigId(oldId: string, newId: string): Promise<ApiConfig> {
+      const mutation = `
+        mutation UpdateApiConfigId($oldId: ID!, $newId: ID!) {
+          updateApiConfigId(oldId: $oldId, newId: $newId) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+            }
+            dataPath
+          }
+        }
+      `;
+      const response = await this.request<{ updateApiConfigId: ApiConfig }>(mutation, { oldId, newId });
+      return response.updateApiConfigId;
+    }
+
     async generateSchema(instruction: string, responseData: string): Promise<any> {
       const query = `
         query GenerateSchema($instruction: String!, $responseData: String) {
