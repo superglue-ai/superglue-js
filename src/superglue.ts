@@ -257,6 +257,7 @@ export class SuperglueClient {
         updatedAt
         responseSchema
         responseMapping
+        instruction
       }
     }
     `;
