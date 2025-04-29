@@ -1,5 +1,8 @@
 import axios from "axios";
 
+export type JSONSchema = any;
+export type JSONata = string;
+export type Upload = File | Blob;
 
 export enum HttpMethod {
   GET = "GET",
@@ -43,12 +46,20 @@ export enum DecompressionMethod {
 export enum PaginationType {
   OFFSET_BASED = "OFFSET_BASED",
   PAGE_BASED = "PAGE_BASED",
+  CURSOR_BASED = "CURSOR_BASED", // Added new type
   DISABLED = "DISABLED"
+}
+
+export enum LogLevel {
+  DEBUG = "DEBUG",
+  INFO = "INFO",
+  WARN = "WARN",
+  ERROR = "ERROR"
 }
 
 export interface BaseConfig {
   id: string;
-  version?: string; 
+  version?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -62,6 +73,12 @@ export interface BaseResult {
   completedAt: Date;
 }
 
+export interface Pagination {
+  type: PaginationType;
+  pageSize?: string;
+  cursorPath?: string;
+}
+
 export interface ApiConfig extends BaseConfig {
   urlHost: string;
   urlPath?: string;
@@ -71,8 +88,8 @@ export interface ApiConfig extends BaseConfig {
   headers?: Record<string, any>;
   body?: string;
   documentationUrl?: string;
-  responseSchema?: any;
-  responseMapping?: string;
+  responseSchema?: JSONSchema;
+  responseMapping?: JSONata;
   authentication?: AuthType;
   pagination?: Pagination;
   dataPath?: string;
@@ -95,70 +112,73 @@ export interface ExtractConfig extends BaseConfig {
 
 export interface TransformConfig extends BaseConfig {
   instruction: string;
-  responseSchema: any;
-  responseMapping: string;
+  responseSchema: JSONSchema;
+  responseMapping: JSONata;
 }
 
-export type Pagination = {
-  type: PaginationType;
-  pageSize?: number;
-};
+export interface ExecutionStep {
+  id: string;
+  apiConfig: ApiConfig;
+  executionMode?: 'DIRECT' | 'LOOP';
+  loopSelector?: JSONata;
+  loopMaxIters?: number;
+  inputMapping?: JSONata;
+  responseMapping?: JSONata;
+}
+
+export interface Workflow extends BaseConfig {
+  steps: ExecutionStep[];
+  finalTransform: JSONata;
+}
+
+export interface WorkflowStepResult {
+  stepId: string;
+  success: boolean;
+  rawData?: any;
+  transformedData?: any;
+  error?: string;
+}
+
+export interface WorkflowResult {
+  success: boolean;
+  data: any;
+  stepResults: WorkflowStepResult[];
+  error?: string;
+  startedAt: Date;
+  completedAt: Date;
+}
+
+export interface Log {
+  id: string;
+  message: string;
+  level: LogLevel;
+  timestamp: Date;
+  runId?: string;
+}
 
 export type RunResult = BaseResult & {
   config: ApiConfig | ExtractConfig | TransformConfig;
 };
 
-export type ApiInput = {
-  urlHost: string;
-  urlPath?: string;
-  queryParams?: Record<string, any>;
-  instruction: string;
-  method?: HttpMethod;
-  headers?: Record<string, any>;
-  body?: string;
-  documentationUrl?: string;
-  responseSchema?: any;
-  responseMapping?: any;
-  authentication?: AuthType;
-  pagination?: Pagination;
-  dataPath?: string;
-  version?: string;
-};
-
 export type ApiInputRequest = {
   id?: string;
-  endpoint: ApiInput;
+  endpoint?: ApiConfig;
 };
 
 export type ExtractInputRequest = {
   id?: string;
-  endpoint: ExtractInput;
+  endpoint?: ExtractConfig;
+  file?: Upload;
 };
 
 export type TransformInputRequest = {
   id?: string;
-  endpoint?: TransformInput;
+  endpoint?: TransformConfig;
 };
 
-export type ExtractInput = {
-  urlHost: string;
-  urlPath?: string;
-  queryParams?: Record<string, any>;
-  instruction: string;
-  method?: HttpMethod;
-  headers?: Record<string, any>;
-  body?: string;
-  documentationUrl?: string;
-  decompressionMethod?: DecompressionMethod;
-  authentication?: AuthType;
-  version?: string;
-};
-
-export type TransformInput = {
-  instruction: string;
-  responseSchema: any;
-  responseMapping?: string;
-  version?: string;
+export type WorkflowInputRequest = {
+  id?: string;
+  workflow?: Workflow;
 };
 
 export type RequestOptions = {
@@ -179,29 +199,36 @@ export type ConfigList = {
   total: number;
 };
 
-// Arguments for making an API call
 export interface ApiCallArgs {
-  id?: string;              // Optional config ID to use
-  endpoint?: ApiInput;      // API configuration
-  payload?: Record<string, any>;     // Request payload
-  credentials?: Record<string, any>; // Authentication credentials
-  options?: RequestOptions;    // Call options
+  id?: string;
+  endpoint?: ApiConfig;
+  payload?: Record<string, any>;
+  credentials?: Record<string, any>;
+  options?: RequestOptions;
 }
 
 export interface TransformArgs {
   id?: string;
-  endpoint?: TransformInput;
+  endpoint?: TransformConfig;
   data: Record<string, any>;
   options?: RequestOptions;
 }
 
 export interface ExtractArgs {
   id?: string;
-  endpoint?: ExtractInput;
-  file?: File | Blob;
+  endpoint?: ExtractConfig;
+  file?: Upload;
   options?: RequestOptions;
   payload?: Record<string, any>;
   credentials?: Record<string, any>;
+}
+
+export interface WorkflowArgs {
+  id?: string;
+  workflow?: Workflow;
+  payload?: Record<string, any>;
+  credentials?: Record<string, any>;
+  options?: RequestOptions;
 }
 
 export class SuperglueClient {
@@ -229,6 +256,7 @@ export class SuperglueClient {
         pagination {
           type
           pageSize
+          cursorPath
         }
         dataPath
       }
@@ -751,6 +779,149 @@ export class SuperglueClient {
       return response.generateSchema;
     }
 
+    async executeWorkflow<T = any>({
+      id,
+      workflow,
+      payload,
+      credentials,
+      options
+    }: WorkflowArgs): Promise<WorkflowResult & { data: T }> {
+      const mutation = `
+        mutation ExecuteWorkflow($input: WorkflowInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
+          executeWorkflow(input: $input, payload: $payload, credentials: $credentials, options: $options) {
+            success
+            data
+            stepResults {
+              stepId
+              success
+              rawData
+              transformedData
+              error
+            }
+            error
+            startedAt
+            completedAt
+          }
+        }
+      `;
+
+      return this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
+        input: { id, workflow },
+        payload,
+        credentials,
+        options
+      }).then(data => data.executeWorkflow);
+    }
+
+    async buildWorkflow(instruction: string, payload: any, systems: Array<{
+      id: string;
+      urlHost: string;
+      urlPath?: string;
+      documentationUrl?: string;
+      documentation?: string;
+      credentials?: Record<string, any>;
+    }>): Promise<Workflow> {
+      const mutation = `
+        mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!) {
+          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems) {
+            id
+            version
+            createdAt
+            updatedAt
+            steps {
+              id
+              apiConfig {
+                id
+                urlHost
+                urlPath
+                instruction
+                method
+                queryParams
+                headers
+                body
+                documentationUrl
+                responseSchema
+                responseMapping
+                authentication
+                pagination {
+                  type
+                  pageSize
+                  cursorPath
+                }
+                dataPath
+              }
+              executionMode
+              loopSelector
+              loopMaxIters
+              inputMapping
+              responseMapping
+            }
+            finalTransform
+          }
+        }
+      `;
+
+      return this.request<{ buildWorkflow: Workflow }>(mutation, {
+        instruction,
+        payload,
+        systems
+      }).then(data => data.buildWorkflow);
+    }
+
+    async upsertWorkflow(id: string, input: Partial<Workflow>): Promise<Workflow> {
+      const mutation = `
+        mutation UpsertWorkflow($id: ID!, $input: JSON!) {
+          upsertWorkflow(id: $id, input: $input) {
+            id
+            version
+            createdAt
+            updatedAt
+            steps {
+              id
+              apiConfig {
+                id
+                urlHost
+                urlPath
+                instruction
+                method
+                queryParams
+                headers
+                body
+                documentationUrl
+                responseSchema
+                responseMapping
+                authentication
+                pagination {
+                  type
+                  pageSize
+                  cursorPath
+                }
+                dataPath
+              }
+              executionMode
+              loopSelector
+              loopMaxIters
+              inputMapping
+              responseMapping
+            }
+            finalTransform
+          }
+        }
+      `;
+
+      return this.request<{ upsertWorkflow: Workflow }>(mutation, { id, input })
+        .then(data => data.upsertWorkflow);
+    }
+
+    async deleteWorkflow(id: string): Promise<boolean> {
+      const mutation = `
+        mutation DeleteWorkflow($id: ID!) {
+          deleteWorkflow(id: $id)
+        }
+      `;
+      return this.request<{ deleteWorkflow: boolean }>(mutation, { id })
+        .then(data => data.deleteWorkflow);
+    }
 }
   
   // Usage example:
@@ -761,6 +932,7 @@ export class SuperglueClient {
   
   // Make a call
   const config = {
+    id: "futurama-api",
     urlHost: "https://futuramaapi.com",
     urlPath: "/graphql",
     instruction: "get all characters from the show",
