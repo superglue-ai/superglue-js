@@ -162,7 +162,7 @@ export interface SystemInput {
   urlPath?: string;
   documentationUrl?: string;
   documentation?: string;
-  credentials?: Record<string, any>;
+  credentials?: Record<string, string>;
 }
 
 export type RunResult = BaseResult & {
@@ -212,7 +212,7 @@ export interface ApiCallArgs {
   id?: string;
   endpoint?: ApiConfig;
   payload?: Record<string, any>;
-  credentials?: Record<string, any>;
+  credentials?: Record<string, string>;
   options?: RequestOptions;
 }
 
@@ -229,14 +229,14 @@ export interface ExtractArgs {
   file?: Upload;
   options?: RequestOptions;
   payload?: Record<string, any>;
-  credentials?: Record<string, any>;
+  credentials?: Record<string, string>;
 }
 
 export interface WorkflowArgs {
   id?: string;
   workflow?: Workflow;
   payload?: Record<string, any>;
-  credentials?: Record<string, any>;
+  credentials?: Record<string, string>;
   options?: RequestOptions;
 }
 
@@ -639,6 +639,101 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ getExtract: ExtractConfig }>(query, { id });
       return response.getExtract;
+    }
+
+    async getWorkflow(id: string): Promise<Workflow> {
+      const query = `
+        query GetWorkflow($id: ID!) {
+          getWorkflow(id: $id) {
+            id
+            version
+            createdAt
+            updatedAt
+            steps {
+              id
+              apiConfig {
+                id
+                version
+                createdAt
+                updatedAt
+                urlHost
+                urlPath
+                instruction
+                method
+                queryParams
+                headers
+                body
+                documentationUrl
+                responseSchema
+                responseMapping
+                authentication
+                pagination {
+                  type
+                  pageSize
+                  cursorPath
+                }
+                dataPath
+              }
+              executionMode
+              loopSelector
+              loopMaxIters
+              inputMapping
+              responseMapping
+            }
+            finalTransform
+          }
+        }
+      `;
+      const response = await this.request<{ getWorkflow: Workflow }>(query, { id });
+      return response.getWorkflow;
+    }
+
+    async listWorkflows(limit: number = 10, offset: number = 0): Promise<Workflow[]> {
+      const query = `
+        query ListWorkflows($limit: Int!, $offset: Int!) {
+          listWorkflows(limit: $limit, offset: $offset) {
+            id
+            version
+            createdAt
+            updatedAt
+            steps {
+              id
+              apiConfig {
+                id
+                version
+                createdAt
+                updatedAt
+                urlHost
+                urlPath
+                instruction
+                method
+                queryParams
+                headers
+                body
+                documentationUrl
+                responseSchema
+                responseMapping
+                authentication
+                pagination {
+                  type
+                  pageSize
+                  cursorPath
+                }
+                dataPath
+              }
+              executionMode
+              loopSelector
+              loopMaxIters
+              inputMapping
+              responseMapping
+            }
+            finalTransform
+          }
+        }
+      `;
+      // Note: The schema indicates listWorkflows returns [Workflow!]!, not a structure with items/total.
+      const response = await this.request<{ listWorkflows: Workflow[] }>(query, { limit, offset });
+      return response.listWorkflows;
     }
 
     async upsertApi(id: string, input: Partial<ApiConfig>): Promise<ApiConfig> {
