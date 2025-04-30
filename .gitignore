@@ -6,8 +6,6 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
-publish.sh
-
 # TypeScript build output
 *.tsbuildinfo
 dist/*

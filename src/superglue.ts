@@ -156,6 +156,15 @@ export interface Log {
   runId?: string;
 }
 
+export interface SystemInput {
+  id: string;
+  urlHost: string;
+  urlPath?: string;
+  documentationUrl?: string;
+  documentation?: string;
+  credentials?: Record<string, any>;
+}
+
 export type RunResult = BaseResult & {
   config: ApiConfig | ExtractConfig | TransformConfig;
 };
@@ -813,14 +822,7 @@ export class SuperglueClient {
       }).then(data => data.executeWorkflow);
     }
 
-    async buildWorkflow(instruction: string, payload: any, systems: Array<{
-      id: string;
-      urlHost: string;
-      urlPath?: string;
-      documentationUrl?: string;
-      documentation?: string;
-      credentials?: Record<string, any>;
-    }>): Promise<Workflow> {
+    async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>): Promise<Workflow> {
       const mutation = `
         mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!) {
           buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems) {
