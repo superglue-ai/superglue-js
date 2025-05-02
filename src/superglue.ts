@@ -113,7 +113,7 @@ export interface ExtractConfig extends BaseConfig {
 export interface TransformConfig extends BaseConfig {
   instruction: string;
   responseSchema: JSONSchema;
-  responseMapping: JSONata;
+  responseMapping?: JSONata;
 }
 
 export interface ExecutionStep {
