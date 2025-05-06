@@ -922,7 +922,7 @@ export class SuperglueClient {
 
     async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>, responseSchema?: JSONSchema): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!, $responseSchema: JSON) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {
             id
             version
