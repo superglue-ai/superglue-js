@@ -129,6 +129,7 @@ export interface ExecutionStep {
 export interface Workflow extends BaseConfig {
   steps: ExecutionStep[];
   finalTransform: JSONata;
+  responseSchema?: JSONSchema;
 }
 
 export interface WorkflowStepResult {
@@ -142,6 +143,7 @@ export interface WorkflowStepResult {
 export interface WorkflowResult {
   success: boolean;
   data: any;
+  finalTransform?: JSONata;
   stepResults: WorkflowStepResult[];
   error?: string;
   startedAt: Date;
@@ -902,6 +904,7 @@ export class SuperglueClient {
               transformedData
               error
             }
+            finalTransform
             error
             startedAt
             completedAt
@@ -917,10 +920,10 @@ export class SuperglueClient {
       }).then(data => data.executeWorkflow);
     }
 
-    async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>): Promise<Workflow> {
+    async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>, responseSchema?: JSONSchema): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!) {
-          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!, $responseSchema: JSON) {
+          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {
             id
             version
             createdAt
@@ -953,6 +956,7 @@ export class SuperglueClient {
               inputMapping
               responseMapping
             }
+            responseSchema
             finalTransform
           }
         }
@@ -961,7 +965,8 @@ export class SuperglueClient {
       return this.request<{ buildWorkflow: Workflow }>(mutation, {
         instruction,
         payload,
-        systems
+        systems,
+        responseSchema
       }).then(data => data.buildWorkflow);
     }
 
@@ -1001,6 +1006,7 @@ export class SuperglueClient {
               inputMapping
               responseMapping
             }
+            responseSchema
             finalTransform
           }
         }
