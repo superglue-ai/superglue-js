@@ -343,8 +343,41 @@ export class SuperglueClient {
         }
       `;
   
+      let gqlInput: Partial<ApiInputRequest> = {};
+
+      if (id) {
+        gqlInput = { id };
+      } else if (endpoint) {
+        const apiInput = {
+          id: endpoint.id,
+          urlHost: endpoint.urlHost,
+          instruction: endpoint.instruction,
+          urlPath: endpoint.urlPath,
+          method: endpoint.method,
+          queryParams: endpoint.queryParams,
+          headers: endpoint.headers,
+          body: endpoint.body,
+          documentationUrl: endpoint.documentationUrl,
+          responseSchema: endpoint.responseSchema,
+          responseMapping: endpoint.responseMapping,
+          authentication: endpoint.authentication,
+          pagination: endpoint.pagination ? {
+            type: endpoint.pagination.type,
+            ...(endpoint.pagination.pageSize !== undefined && { pageSize: endpoint.pagination.pageSize }),
+            ...(endpoint.pagination.cursorPath !== undefined && { cursorPath: endpoint.pagination.cursorPath }),
+          } : undefined,
+          dataPath: endpoint.dataPath,
+          version: endpoint.version,
+        };
+        // Remove undefined optional fields
+        Object.keys(apiInput).forEach(key => (apiInput as any)[key] === undefined && delete (apiInput as any)[key]);
+        gqlInput = { endpoint: apiInput };
+      } else {
+        throw new Error("Either id or endpoint must be provided for call.");
+      }
+
       const result = await this.request<{ call: RunResult & { data: T } }>(mutation, {
-        input: { id, endpoint },
+        input: gqlInput,
         payload,
         credentials,
         options
@@ -383,7 +416,7 @@ export class SuperglueClient {
         const operations = {
           query: mutation,
           variables: { 
-            input: { file: null },
+            input: { file: null }, // This adheres to GQL multipart spec for file uploads
             payload,
             credentials,
             options 
@@ -408,8 +441,35 @@ export class SuperglueClient {
         return response.data.data.extract;
       }
 
+      let gqlInput: Partial<ExtractInputRequest> = {};
+      if (id) {
+        gqlInput = { id };
+      } else if (endpoint) {
+        const extractInput = {
+          id: endpoint.id,
+          urlHost: endpoint.urlHost,
+          instruction: endpoint.instruction,
+          urlPath: endpoint.urlPath,
+          queryParams: endpoint.queryParams,
+          method: endpoint.method,
+          headers: endpoint.headers,
+          body: endpoint.body,
+          documentationUrl: endpoint.documentationUrl,
+          decompressionMethod: endpoint.decompressionMethod,
+          fileType: endpoint.fileType,
+          authentication: endpoint.authentication,
+          dataPath: endpoint.dataPath,
+          version: endpoint.version,
+        };
+        Object.keys(extractInput).forEach(key => (extractInput as any)[key] === undefined && delete (extractInput as any)[key]);
+        gqlInput = { endpoint: extractInput };
+      } else {
+        // If file is not provided, either id or endpoint must be.
+        throw new Error("Either id, endpoint, or file must be provided for extract.");
+      }
+
       return this.request<{ extract: RunResult & { data: T } }>(mutation, {
-        input: { id, endpoint },
+        input: gqlInput,
         payload,
         credentials,
         options
@@ -436,8 +496,25 @@ export class SuperglueClient {
         }
       `;
   
+      let gqlInput: Partial<TransformInputRequest> = {};
+      if (id) {
+        gqlInput = { id };
+      } else if (endpoint) {
+        const transformInput = {
+          id: endpoint.id,
+          instruction: endpoint.instruction,
+          responseSchema: endpoint.responseSchema,
+          responseMapping: endpoint.responseMapping,
+          version: endpoint.version,
+        };
+        Object.keys(transformInput).forEach(key => (transformInput as any)[key] === undefined && delete (transformInput as any)[key]);
+        gqlInput = { endpoint: transformInput };
+      } else {
+        throw new Error("Either id or endpoint must be provided for transform.");
+      }
+
       return this.request<{ transform: RunResult & { data: T } }>(mutation, {
-        input: { id, endpoint },
+        input: gqlInput,
         data,
         options
       }).then(data => data.transform);
@@ -912,8 +989,60 @@ export class SuperglueClient {
         }
       `;
 
+      let gqlInput: Partial<WorkflowInputRequest> = {};
+
+      if (id) {
+        gqlInput = { id };
+      } else if (workflow) {
+        const workflowInput = {
+          id: workflow.id,
+          steps: workflow.steps.map(step => {
+            const apiConfigInput = {
+              id: step.apiConfig.id,
+              urlHost: step.apiConfig.urlHost,
+              instruction: step.apiConfig.instruction,
+              urlPath: step.apiConfig.urlPath,
+              method: step.apiConfig.method,
+              queryParams: step.apiConfig.queryParams,
+              headers: step.apiConfig.headers,
+              body: step.apiConfig.body,
+              documentationUrl: step.apiConfig.documentationUrl,
+              responseSchema: step.apiConfig.responseSchema,
+              responseMapping: step.apiConfig.responseMapping,
+              authentication: step.apiConfig.authentication,
+              pagination: step.apiConfig.pagination ? {
+                type: step.apiConfig.pagination.type,
+                ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
+                ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
+              } : undefined,
+              dataPath: step.apiConfig.dataPath,
+              version: step.apiConfig.version,
+            };
+            Object.keys(apiConfigInput).forEach(key => (apiConfigInput as any)[key] === undefined && delete (apiConfigInput as any)[key]);
+            
+            const executionStepInput = {
+              id: step.id,
+              apiConfig: apiConfigInput,
+              executionMode: step.executionMode,
+              loopSelector: step.loopSelector,
+              loopMaxIters: step.loopMaxIters,
+              inputMapping: step.inputMapping,
+              responseMapping: step.responseMapping,
+            };
+            Object.keys(executionStepInput).forEach(key => (executionStepInput as any)[key] === undefined && delete (executionStepInput as any)[key]);
+            return executionStepInput;
+          }),
+          finalTransform: workflow.finalTransform,
+          responseSchema: workflow.responseSchema,
+        };
+        Object.keys(workflowInput).forEach(key => (workflowInput as any)[key] === undefined && delete (workflowInput as any)[key]);
+        gqlInput = { workflow: workflowInput };
+      } else {
+        throw new Error("Either id or workflow must be provided for executeWorkflow.");
+      }
+
       return this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
-        input: { id, workflow },
+        input: gqlInput,
         payload,
         credentials,
         options
@@ -966,7 +1095,7 @@ export class SuperglueClient {
         instruction,
         payload,
         systems,
-        responseSchema
+        responseSchema: responseSchema ?? {}
       }).then(data => data.buildWorkflow);
     }
 
