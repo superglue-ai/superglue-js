@@ -767,7 +767,7 @@ export class SuperglueClient {
       return response.getWorkflow;
     }
 
-    async listWorkflows(limit: number = 10, offset: number = 0): Promise<Workflow[]> {
+    async listWorkflows(limit: number = 10, offset: number = 0): Promise<{ items: Workflow[], total: number }> {
       const query = `
         query ListWorkflows($limit: Int!, $offset: Int!) {
           listWorkflows(limit: $limit, offset: $offset) {
@@ -775,6 +775,7 @@ export class SuperglueClient {
             version
             createdAt
             updatedAt
+            instruction
             steps {
               id
               apiConfig {
@@ -811,7 +812,7 @@ export class SuperglueClient {
         }
       `;
       // Note: The schema indicates listWorkflows returns [Workflow!]!, not a structure with items/total.
-      const response = await this.request<{ listWorkflows: Workflow[] }>(query, { limit, offset });
+      const response = await this.request<{ listWorkflows: { items: Workflow[], total: number } }>(query, { limit, offset });
       return response.listWorkflows;
     }
 
