@@ -771,43 +771,47 @@ export class SuperglueClient {
       const query = `
         query ListWorkflows($limit: Int!, $offset: Int!) {
           listWorkflows(limit: $limit, offset: $offset) {
-            id
-            version
-            createdAt
-            updatedAt
-            instruction
-            steps {
+            items {
               id
-              apiConfig {
+              version
+              createdAt
+              updatedAt
+              finalTransform
+              responseSchema
+              steps {
                 id
-                version
-                createdAt
-                updatedAt
-                urlHost
-                urlPath
-                instruction
-                method
-                queryParams
-                headers
-                body
-                documentationUrl
-                responseSchema
-                responseMapping
-                authentication
-                pagination {
-                  type
-                  pageSize
-                  cursorPath
+                apiConfig {
+                  id
+                  version
+                  createdAt
+                  updatedAt
+                  urlHost
+                  urlPath
+                  instruction
+                  method
+                  queryParams
+                  headers
+                  body
+                  documentationUrl
+                  responseSchema
+                  responseMapping
+                  authentication
+                  dataPath
+                  pagination {
+                    cursorPath
+                    pageSize
+                    type
+                  }
                 }
-                dataPath
+                executionMode
+                loopSelector
+                loopMaxIters
+                inputMapping
+                responseMapping
               }
-              executionMode
-              loopSelector
-              loopMaxIters
-              inputMapping
-              responseMapping
+              instruction
             }
-            finalTransform
+            total
           }
         }
       `;
