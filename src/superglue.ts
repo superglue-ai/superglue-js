@@ -130,6 +130,7 @@ export interface Workflow extends BaseConfig {
   steps: ExecutionStep[];
   finalTransform: JSONata;
   responseSchema?: JSONSchema;
+  instruction?: string;
 }
 
 export interface WorkflowStepResult {
@@ -760,6 +761,7 @@ export class SuperglueClient {
               responseMapping
             }
             finalTransform
+            instruction
           }
         }
       `;
@@ -778,6 +780,7 @@ export class SuperglueClient {
               updatedAt
               finalTransform
               responseSchema
+              instruction
               steps {
                 id
                 apiConfig {
@@ -809,7 +812,6 @@ export class SuperglueClient {
                 inputMapping
                 responseMapping
               }
-              instruction
             }
             total
           }
@@ -1039,6 +1041,7 @@ export class SuperglueClient {
           }),
           finalTransform: workflow.finalTransform,
           responseSchema: workflow.responseSchema,
+          instruction: workflow.instruction,
         };
         Object.keys(workflowInput).forEach(key => (workflowInput as any)[key] === undefined && delete (workflowInput as any)[key]);
         gqlInput = { workflow: workflowInput };
@@ -1142,6 +1145,7 @@ export class SuperglueClient {
             }
             responseSchema
             finalTransform
+            instruction
           }
         }
       `;
