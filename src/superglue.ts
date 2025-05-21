@@ -1037,6 +1037,7 @@ export class SuperglueClient {
             return executionStepInput;
           }),
           finalTransform: workflow.finalTransform,
+          inputSchema: workflow.inputSchema,
           responseSchema: workflow.responseSchema,
           instruction: workflow.instruction,
         };
