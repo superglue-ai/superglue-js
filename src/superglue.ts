@@ -25,6 +25,7 @@ export enum FileType {
   CSV = "CSV",
   JSON = "JSON",
   XML = "XML",
+  EXCEL = "EXCEL",
   AUTO = "AUTO"
 }
 
@@ -128,27 +129,24 @@ export interface ExecutionStep {
 
 export interface Workflow extends BaseConfig {
   steps: ExecutionStep[];
-  finalTransform: JSONata;
+  finalTransform?: JSONata;
+  inputSchema?: JSONSchema;
   responseSchema?: JSONSchema;
   instruction?: string;
 }
 
 export interface WorkflowStepResult {
   stepId: string;
+  config?: ApiConfig; 
   success: boolean;
   rawData?: any;
   transformedData?: any;
   error?: string;
 }
 
-export interface WorkflowResult {
-  success: boolean;
-  data: any;
-  finalTransform?: JSONata;
+export interface WorkflowResult extends BaseResult {
+  config: Workflow;
   stepResults: WorkflowStepResult[];
-  error?: string;
-  startedAt: Date;
-  completedAt: Date;
 }
 
 export interface Log {
@@ -169,7 +167,7 @@ export interface SystemInput {
 }
 
 export type RunResult = BaseResult & {
-  config: ApiConfig | ExtractConfig | TransformConfig;
+  config: ApiConfig | ExtractConfig | TransformConfig | Workflow;
 };
 
 export type ApiInputRequest = {
@@ -246,7 +244,43 @@ export interface WorkflowArgs {
 export class SuperglueClient {
     private endpoint: string;
     private apiKey: string;    
-
+    private static workflowQL = `
+        id
+        version
+        createdAt
+        updatedAt
+        steps {
+          id
+          apiConfig {
+            id
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+              cursorPath
+            }
+            dataPath
+          }
+          executionMode
+          loopSelector
+          loopMaxIters
+          inputMapping
+          responseMapping
+        }
+        responseSchema
+        finalTransform
+        inputSchema
+    `;
     private static configQL = `
     config {
       ... on ApiConfig {
@@ -761,6 +795,8 @@ export class SuperglueClient {
               responseMapping
             }
             finalTransform
+            inputSchema
+            responseSchema
             instruction
           }
         }
@@ -773,46 +809,7 @@ export class SuperglueClient {
       const query = `
         query ListWorkflows($limit: Int!, $offset: Int!) {
           listWorkflows(limit: $limit, offset: $offset) {
-            items {
-              id
-              version
-              createdAt
-              updatedAt
-              finalTransform
-              responseSchema
-              instruction
-              steps {
-                id
-                apiConfig {
-                  id
-                  version
-                  createdAt
-                  updatedAt
-                  urlHost
-                  urlPath
-                  instruction
-                  method
-                  queryParams
-                  headers
-                  body
-                  documentationUrl
-                  responseSchema
-                  responseMapping
-                  authentication
-                  dataPath
-                  pagination {
-                    cursorPath
-                    pageSize
-                    type
-                  }
-                }
-                executionMode
-                loopSelector
-                loopMaxIters
-                inputMapping
-                responseMapping
-              }
-            }
+            items {${SuperglueClient.workflowQL}}
             total
           }
         }
@@ -975,12 +972,13 @@ export class SuperglueClient {
       payload,
       credentials,
       options
-    }: WorkflowArgs): Promise<WorkflowResult & { data: T }> {
+    }: WorkflowArgs): Promise<WorkflowResult & { data?: T }> {
       const mutation = `
         mutation ExecuteWorkflow($input: WorkflowInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
           executeWorkflow(input: $input, payload: $payload, credentials: $credentials, options: $options) {
             success
             data
+            config {${SuperglueClient.workflowQL}}
             stepResults {
               stepId
               success
@@ -988,7 +986,6 @@ export class SuperglueClient {
               transformedData
               error
             }
-            finalTransform
             error
             startedAt
             completedAt
@@ -1060,42 +1057,7 @@ export class SuperglueClient {
     async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>, responseSchema?: JSONSchema): Promise<Workflow> {
       const mutation = `
         mutation BuildWorkflow($instruction: String!, $payload: JSON!, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
-          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {
-            id
-            version
-            createdAt
-            updatedAt
-            steps {
-              id
-              apiConfig {
-                id
-                urlHost
-                urlPath
-                instruction
-                method
-                queryParams
-                headers
-                body
-                documentationUrl
-                responseSchema
-                responseMapping
-                authentication
-                pagination {
-                  type
-                  pageSize
-                  cursorPath
-                }
-                dataPath
-              }
-              executionMode
-              loopSelector
-              loopMaxIters
-              inputMapping
-              responseMapping
-            }
-            responseSchema
-            finalTransform
-          }
+          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
 
@@ -1110,43 +1072,7 @@ export class SuperglueClient {
     async upsertWorkflow(id: string, input: Partial<Workflow>): Promise<Workflow> {
       const mutation = `
         mutation UpsertWorkflow($id: ID!, $input: JSON!) {
-          upsertWorkflow(id: $id, input: $input) {
-            id
-            version
-            createdAt
-            updatedAt
-            steps {
-              id
-              apiConfig {
-                id
-                urlHost
-                urlPath
-                instruction
-                method
-                queryParams
-                headers
-                body
-                documentationUrl
-                responseSchema
-                responseMapping
-                authentication
-                pagination {
-                  type
-                  pageSize
-                  cursorPath
-                }
-                dataPath
-              }
-              executionMode
-              loopSelector
-              loopMaxIters
-              inputMapping
-              responseMapping
-            }
-            responseSchema
-            finalTransform
-            instruction
-          }
+          upsertWorkflow(id: $id, input: $input) {${SuperglueClient.workflowQL}}
         }
       `;
 
