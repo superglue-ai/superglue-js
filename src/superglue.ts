@@ -333,6 +333,9 @@ export class SuperglueClient {
         responseMapping
         instruction
       }
+      ... on Workflow {
+        ${SuperglueClient.workflowQL}
+      }
     }
     `;
 
