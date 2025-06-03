@@ -203,11 +203,19 @@ export type WorkflowInputRequest = {
 
 export type RequestOptions = {
   cacheMode?: CacheMode;
+  selfHealing?: SelfHealingMode;
   timeout?: number;
   retries?: number;
   retryDelay?: number;
   webhookUrl?: string;
 };
+
+export enum SelfHealingMode {
+    ENABLED = "ENABLED",
+    TRANSFORM_ONLY = "TRANSFORM_ONLY",
+    REQUEST_ONLY = "REQUEST_ONLY",
+    DISABLED = "DISABLED"
+}
 
 export type ResultList = {
   items: RunResult[];
