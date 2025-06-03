@@ -166,8 +166,18 @@ export interface SystemInput {
   credentials?: Record<string, string>;
 }
 
-export type RunResult = BaseResult & {
-  config: ApiConfig | ExtractConfig | TransformConfig | Workflow;
+export type RunResult = ApiResult | ExtractResult | TransformResult | WorkflowResult;
+
+export type TransformResult = BaseResult & {
+  config: TransformConfig;
+};
+
+export type ExtractResult = BaseResult & {
+  config: ExtractConfig;
+};
+
+export type ApiResult = BaseResult & {
+  config: ApiConfig;
 };
 
 export type ApiInputRequest = {
@@ -366,7 +376,7 @@ export class SuperglueClient {
         }
     }
 
-    async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<RunResult & { data: T }> {
+    async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<ApiResult & { data: T }> {
       const mutation = `
         mutation Call($input: ApiInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
           call(input: $input, payload: $payload, credentials: $credentials, options: $options) {
@@ -414,7 +424,7 @@ export class SuperglueClient {
         throw new Error("Either id or endpoint must be provided for call.");
       }
 
-      const result = await this.request<{ call: RunResult & { data: T } }>(mutation, {
+      const result = await this.request<{ call: ApiResult & { data: T } }>(mutation, {
         input: gqlInput,
         payload,
         credentials,
@@ -435,7 +445,7 @@ export class SuperglueClient {
       payload,
       credentials,    
       options
-    }: ExtractArgs): Promise<RunResult & { data: T }> {
+    }: ExtractArgs): Promise<ExtractResult & { data: T }> {
       const mutation = `
         mutation Extract($input: ExtractInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
           extract(input: $input, payload: $payload, credentials: $credentials, options: $options) {
@@ -506,7 +516,7 @@ export class SuperglueClient {
         throw new Error("Either id, endpoint, or file must be provided for extract.");
       }
 
-      return this.request<{ extract: RunResult & { data: T } }>(mutation, {
+      return this.request<{ extract: ExtractResult & { data: T } }>(mutation, {
         input: gqlInput,
         payload,
         credentials,
@@ -519,7 +529,7 @@ export class SuperglueClient {
       endpoint,
       data,
       options
-    }: TransformArgs): Promise<RunResult & { data: T }> {
+    }: TransformArgs): Promise<TransformResult & { data: T }> {
       const mutation = `
         mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: RequestOptions) {
           transform(input: $input, data: $data, options: $options) {
@@ -551,7 +561,7 @@ export class SuperglueClient {
         throw new Error("Either id or endpoint must be provided for transform.");
       }
 
-      return this.request<{ transform: RunResult & { data: T } }>(mutation, {
+      return this.request<{ transform: TransformResult & { data: T } }>(mutation, {
         input: gqlInput,
         data,
         options
