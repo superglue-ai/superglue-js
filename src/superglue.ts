@@ -1,4 +1,5 @@
 import axios from "axios";
+import { WebSocketManager, LogSubscriptionOptions, WebSocketSubscription } from "./websocket-manager.js";
 
 export type JSONSchema = any;
 export type JSONata = string;
@@ -257,6 +258,7 @@ export interface WorkflowArgs {
   payload?: Record<string, any>;
   credentials?: Record<string, string>;
   options?: RequestOptions;
+  verbose?: boolean;
 }
 
 export interface BuildWorkflowArgs {
@@ -265,11 +267,14 @@ export interface BuildWorkflowArgs {
   systems?: Array<SystemInput>;
   responseSchema?: JSONSchema;
   save?: boolean;
+  verbose?: boolean;
 }
 
 export class SuperglueClient {
     private endpoint: string;
-    private apiKey: string;    
+    private apiKey: string;
+    private wsManager: WebSocketManager;
+    
     private static workflowQL = `
         id
         version
@@ -307,6 +312,7 @@ export class SuperglueClient {
         finalTransform
         inputSchema
     `;
+    
     private static configQL = `
     config {
       ... on ApiConfig {
@@ -368,8 +374,9 @@ export class SuperglueClient {
     constructor({endpoint, apiKey}: {endpoint?: string, apiKey: string}) {
       this.endpoint = endpoint ?? 'https://graphql.superglue.cloud';
       this.apiKey = apiKey;
+      this.wsManager = new WebSocketManager(this.endpoint, this.apiKey);
     }
-  
+
     private async request<T>(query: string, variables?: Record<string, any>): Promise<T> {
         try { 
             const response = await axios.post(this.endpoint, {
@@ -390,6 +397,199 @@ export class SuperglueClient {
             console.error(error);
             throw error;
         }
+    }
+
+    // WebSocket methods delegated to WebSocketManager
+    async subscribeToLogs(options: LogSubscriptionOptions = {}): Promise<WebSocketSubscription> {
+      return this.wsManager.subscribeToLogs(options);
+    }
+
+    async disconnect(): Promise<void> {
+      return this.wsManager.disconnect();
+    }
+
+    // Enhanced executeWorkflow with log subscription
+    async executeWorkflow<T = any>({
+      id,
+      workflow,
+      payload,
+      credentials,
+      options,
+      verbose = true
+    }: WorkflowArgs): Promise<WorkflowResult & { data?: T }> {
+      const mutation = `
+        mutation ExecuteWorkflow($input: WorkflowInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
+          executeWorkflow(input: $input, payload: $payload, credentials: $credentials, options: $options) {
+            id
+            success
+            data
+            config {${SuperglueClient.workflowQL}}
+            stepResults {
+              stepId
+              success
+              rawData
+              transformedData
+              error
+            }
+            error
+            startedAt
+            completedAt
+          }
+        }
+      `;
+
+      let gqlInput: Partial<WorkflowInputRequest> = {};
+
+      if (id) {
+        gqlInput = { id };
+      } else if (workflow) {
+        const workflowInput = {
+          id: workflow.id,
+          steps: workflow.steps.map(step => {
+            const apiConfigInput = {
+              id: step.apiConfig.id,
+              urlHost: step.apiConfig.urlHost,
+              instruction: step.apiConfig.instruction,
+              urlPath: step.apiConfig.urlPath,
+              method: step.apiConfig.method,
+              queryParams: step.apiConfig.queryParams,
+              headers: step.apiConfig.headers,
+              body: step.apiConfig.body,
+              documentationUrl: step.apiConfig.documentationUrl,
+              responseSchema: step.apiConfig.responseSchema,
+              responseMapping: step.apiConfig.responseMapping,
+              authentication: step.apiConfig.authentication,
+              pagination: step.apiConfig.pagination ? {
+                type: step.apiConfig.pagination.type,
+                ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
+                ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
+              } : undefined,
+              dataPath: step.apiConfig.dataPath,
+              version: step.apiConfig.version,
+            };
+            Object.keys(apiConfigInput).forEach(key => (apiConfigInput as any)[key] === undefined && delete (apiConfigInput as any)[key]);
+            
+            const executionStepInput = {
+              id: step.id,
+              apiConfig: apiConfigInput,
+              executionMode: step.executionMode,
+              loopSelector: step.loopSelector,
+              loopMaxIters: step.loopMaxIters,
+              inputMapping: step.inputMapping,
+              responseMapping: step.responseMapping,
+            };
+            Object.keys(executionStepInput).forEach(key => (executionStepInput as any)[key] === undefined && delete (executionStepInput as any)[key]);
+            return executionStepInput;
+          }),
+          finalTransform: workflow.finalTransform,
+          inputSchema: workflow.inputSchema,
+          responseSchema: workflow.responseSchema,
+          instruction: workflow.instruction,
+        };
+        Object.keys(workflowInput).forEach(key => (workflowInput as any)[key] === undefined && delete (workflowInput as any)[key]);
+        gqlInput = { workflow: workflowInput };
+      } else {
+        throw new Error("Either id or workflow must be provided for executeWorkflow.");
+      }
+
+      // Set up log subscription if verbose is enabled
+      let logSubscription: WebSocketSubscription | undefined;
+      if (verbose) {
+        try {
+        logSubscription = await this.subscribeToLogs({
+          onLog: (log: Log) => {
+            const timestamp = log.timestamp.toLocaleTimeString();
+            const levelColor = log.level === 'ERROR' ? '\x1b[31m' : 
+                              log.level === 'WARN' ? '\x1b[33m' : 
+                              log.level === 'DEBUG' ? '\x1b[36m' : '\x1b[0m';
+            console.log(`${levelColor}[${timestamp}] ${log.level}\x1b[0m: ${log.message}`);
+          },
+          onError: (error: Error) => {
+            console.error('Log subscription error:', error);
+          },
+            includeDebug: true
+          });
+        } catch (error) {
+          console.error('Log subscription error:', error);
+        }
+      }
+
+      try {
+        const result = await this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
+          input: gqlInput,
+          payload,
+          credentials,
+          options
+        }).then(data => data.executeWorkflow);
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        return result;
+      } finally {
+        // Clean up log subscription
+        if (logSubscription) {
+          // Wait a bit to catch any final logs
+          setTimeout(() => {
+            logSubscription.unsubscribe();
+          }, 1000);
+        }
+      }
+    }
+
+    // Enhanced buildWorkflow with log subscription
+    async buildWorkflow({instruction, payload, systems, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
+      const mutation = `
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
+          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
+        }
+      `;
+
+      // Set up log subscription if verbose is enabled
+      let logSubscription: WebSocketSubscription | undefined;
+      if (verbose) {
+        try {
+        logSubscription = await this.subscribeToLogs({
+          onLog: (log: Log) => {
+            const timestamp = log.timestamp.toLocaleTimeString();
+            const levelColor = log.level === 'ERROR' ? '\x1b[31m' : 
+                              log.level === 'WARN' ? '\x1b[33m' : 
+                              log.level === 'DEBUG' ? '\x1b[36m' : '\x1b[0m';
+            console.log(`${levelColor}[${timestamp}] ${log.level}\x1b[0m: ${log.message}`);
+          },
+          onError: (error: Error) => {
+            console.error('Log subscription error:', error);
+          },
+          includeDebug: true
+        });
+        } catch (error) {
+          console.error('Log subscription error:', error);
+        }
+      }
+
+      try {
+        const workflow = await this.request<{ buildWorkflow: Workflow }>(mutation, {
+          instruction,
+          payload,
+          systems,
+          responseSchema: responseSchema ?? {}
+        }).then(data => data.buildWorkflow);
+
+        if (save) {
+          await this.upsertWorkflow(workflow.id, workflow);
+        }
+
+        return workflow;
+      } finally {
+        // Clean up log subscription
+        if (logSubscription) {
+          // Wait a bit to catch any final logs
+          setTimeout(() => {
+            logSubscription.unsubscribe();
+          }, 2000);
+        }
+      }
     }
 
     async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<ApiResult & { data: T }> {
@@ -843,7 +1043,6 @@ export class SuperglueClient {
           }
         }
       `;
-      // Note: The schema indicates listWorkflows returns [Workflow!]!, not a structure with items/total.
       const response = await this.request<{ listWorkflows: { items: Workflow[], total: number } }>(query, { limit, offset });
       return response.listWorkflows;
     }
@@ -993,116 +1192,6 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ generateSchema: string }>(query, { instruction, responseData });
       return response.generateSchema;
-    }
-
-    async executeWorkflow<T = any>({
-      id,
-      workflow,
-      payload,
-      credentials,
-      options
-    }: WorkflowArgs): Promise<WorkflowResult & { data?: T }> {
-      const mutation = `
-        mutation ExecuteWorkflow($input: WorkflowInputRequest!, $payload: JSON, $credentials: JSON, $options: RequestOptions) {
-          executeWorkflow(input: $input, payload: $payload, credentials: $credentials, options: $options) {
-            success
-            data
-            config {${SuperglueClient.workflowQL}}
-            stepResults {
-              stepId
-              success
-              rawData
-              transformedData
-              error
-            }
-            error
-            startedAt
-            completedAt
-          }
-        }
-      `;
-
-      let gqlInput: Partial<WorkflowInputRequest> = {};
-
-      if (id) {
-        gqlInput = { id };
-      } else if (workflow) {
-        const workflowInput = {
-          id: workflow.id,
-          steps: workflow.steps.map(step => {
-            const apiConfigInput = {
-              id: step.apiConfig.id,
-              urlHost: step.apiConfig.urlHost,
-              instruction: step.apiConfig.instruction,
-              urlPath: step.apiConfig.urlPath,
-              method: step.apiConfig.method,
-              queryParams: step.apiConfig.queryParams,
-              headers: step.apiConfig.headers,
-              body: step.apiConfig.body,
-              documentationUrl: step.apiConfig.documentationUrl,
-              responseSchema: step.apiConfig.responseSchema,
-              responseMapping: step.apiConfig.responseMapping,
-              authentication: step.apiConfig.authentication,
-              pagination: step.apiConfig.pagination ? {
-                type: step.apiConfig.pagination.type,
-                ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
-                ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
-              } : undefined,
-              dataPath: step.apiConfig.dataPath,
-              version: step.apiConfig.version,
-            };
-            Object.keys(apiConfigInput).forEach(key => (apiConfigInput as any)[key] === undefined && delete (apiConfigInput as any)[key]);
-            
-            const executionStepInput = {
-              id: step.id,
-              apiConfig: apiConfigInput,
-              executionMode: step.executionMode,
-              loopSelector: step.loopSelector,
-              loopMaxIters: step.loopMaxIters,
-              inputMapping: step.inputMapping,
-              responseMapping: step.responseMapping,
-            };
-            Object.keys(executionStepInput).forEach(key => (executionStepInput as any)[key] === undefined && delete (executionStepInput as any)[key]);
-            return executionStepInput;
-          }),
-          finalTransform: workflow.finalTransform,
-          inputSchema: workflow.inputSchema,
-          responseSchema: workflow.responseSchema,
-          instruction: workflow.instruction,
-        };
-        Object.keys(workflowInput).forEach(key => (workflowInput as any)[key] === undefined && delete (workflowInput as any)[key]);
-        gqlInput = { workflow: workflowInput };
-      } else {
-        throw new Error("Either id or workflow must be provided for executeWorkflow.");
-      }
-
-      return this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
-        input: gqlInput,
-        payload,
-        credentials,
-        options
-      }).then(data => data.executeWorkflow);
-    }
-
-    async buildWorkflow({instruction, payload, systems, responseSchema, save = true}: BuildWorkflowArgs): Promise<Workflow> {
-      const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
-          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
-        }
-      `;
-
-      const workflow = await this.request<{ buildWorkflow: Workflow }>(mutation, {
-        instruction,
-        payload,
-        systems,
-        responseSchema: responseSchema ?? {}
-      }).then(data => data.buildWorkflow);
-
-      if (save) {
-        await this.upsertWorkflow(workflow.id, workflow);
-      }
-
-      return workflow;
     }
 
     async upsertWorkflow(id: string, input: Partial<Workflow>): Promise<Workflow> {
