@@ -259,6 +259,14 @@ export interface WorkflowArgs {
   options?: RequestOptions;
 }
 
+export interface BuildWorkflowArgs {
+  instruction: string;
+  payload?: Record<string, any>;
+  systems?: Array<SystemInput>;
+  responseSchema?: JSONSchema;
+  save?: boolean;
+}
+
 export class SuperglueClient {
     private endpoint: string;
     private apiKey: string;    
@@ -1076,19 +1084,25 @@ export class SuperglueClient {
       }).then(data => data.executeWorkflow);
     }
 
-    async buildWorkflow(instruction: string, payload: any, systems: Array<SystemInput>, responseSchema?: JSONSchema): Promise<Workflow> {
+    async buildWorkflow({instruction, payload, systems, responseSchema, save = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
         mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
 
-      return this.request<{ buildWorkflow: Workflow }>(mutation, {
+      const workflow = await this.request<{ buildWorkflow: Workflow }>(mutation, {
         instruction,
         payload,
         systems,
         responseSchema: responseSchema ?? {}
       }).then(data => data.buildWorkflow);
+
+      if (save) {
+        await this.upsertWorkflow(workflow.id, workflow);
+      }
+
+      return workflow;
     }
 
     async upsertWorkflow(id: string, input: Partial<Workflow>): Promise<Workflow> {
