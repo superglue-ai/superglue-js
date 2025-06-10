@@ -1,6 +1,6 @@
 {
     "name": "@superglue/client",
-    "version": "2.3.31",
+    "version": "2.3.32",
     "main": "dist/superglue.js",
     "types": "dist/superglue.d.ts",
     "files": [
