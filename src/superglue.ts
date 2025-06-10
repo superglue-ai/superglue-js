@@ -150,6 +150,18 @@ export interface WorkflowResult extends BaseResult {
   stepResults: WorkflowStepResult[];
 }
 
+export interface Integration extends BaseConfig {
+  name?: string;
+  type?: string;
+  urlHost: string;
+  urlPath?: string;
+  credentials?: Record<string, any>;
+  documentationUrl?: string;
+  documentation?: string;
+  icon?: string;
+  orgId?: string;
+}
+
 export interface Log {
   id: string;
   message: string;
