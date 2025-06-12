@@ -170,15 +170,6 @@ export interface Log {
   runId?: string;
 }
 
-export interface IntegrationInput {
-  id: string;
-  urlHost?: string;
-  urlPath?: string;
-  documentationUrl?: string;
-  documentation?: string;
-  credentials?: Record<string, string>;
-}
-
 export type RunResult = ApiResult | ExtractResult | TransformResult | WorkflowResult;
 
 export type TransformResult = BaseResult & {
@@ -276,7 +267,7 @@ export interface WorkflowArgs {
 export interface BuildWorkflowArgs {
   instruction: string;
   payload?: Record<string, any>;
-  systems?: Array<IntegrationInput>;
+  integrations?: ({ integration: Integration; id?: never } | { integration?: never; id: string })[];
   responseSchema?: JSONSchema;
   save?: boolean;
   verbose?: boolean;
@@ -551,10 +542,10 @@ export class SuperglueClient {
     }
 
     // Enhanced buildWorkflow with log subscription
-    async buildWorkflow({instruction, payload, systems, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
+    async buildWorkflow({instruction, payload, integrations, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [IntegrationInput!]!, $responseSchema: JSONSchema) {
-          buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [IntegrationInput!]!, $responseSchema: JSONSchema) {
+          buildWorkflow(instruction: $instruction, payload: $payload, integrations: $integrations, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
 
@@ -584,7 +575,7 @@ export class SuperglueClient {
         const workflow = await this.request<{ buildWorkflow: Workflow }>(mutation, {
           instruction,
           payload,
-          systems,
+          integrations,
           responseSchema: responseSchema ?? {}
         }).then(data => data.buildWorkflow);
 
