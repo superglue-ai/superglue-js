@@ -267,7 +267,7 @@ export interface WorkflowArgs {
 export interface BuildWorkflowArgs {
   instruction: string;
   payload?: Record<string, any>;
-  integrations?: ({ integration: Integration; id?: never } | { integration?: never; id: string })[];
+  integrations: ({ integration: Integration; id?: never } | { integration?: never; id: string })[];
   responseSchema?: JSONSchema;
   save?: boolean;
   verbose?: boolean;
