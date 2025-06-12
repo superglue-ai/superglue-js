@@ -82,7 +82,7 @@ export interface Pagination {
 }
 
 export interface ApiConfig extends BaseConfig {
-  urlHost: string;
+  urlHost?: string;
   urlPath?: string;
   instruction: string;
   method?: HttpMethod;
@@ -98,7 +98,7 @@ export interface ApiConfig extends BaseConfig {
 }
 
 export interface ExtractConfig extends BaseConfig {
-  urlHost: string;
+  urlHost?: string;
   urlPath?: string;
   instruction: string;
   queryParams?: Record<string, any>;
@@ -130,6 +130,7 @@ export interface ExecutionStep {
 
 export interface Workflow extends BaseConfig {
   steps: ExecutionStep[];
+  integrationIds?: string[];
   finalTransform?: JSONata;
   inputSchema?: JSONSchema;
   responseSchema?: JSONSchema;
@@ -153,13 +154,12 @@ export interface WorkflowResult extends BaseResult {
 export interface Integration extends BaseConfig {
   name?: string;
   type?: string;
-  urlHost: string;
+  urlHost?: string;
   urlPath?: string;
   credentials?: Record<string, any>;
   documentationUrl?: string;
   documentation?: string;
   icon?: string;
-  orgId?: string;
 }
 
 export interface Log {
@@ -170,9 +170,9 @@ export interface Log {
   runId?: string;
 }
 
-export interface SystemInput {
+export interface IntegrationInput {
   id: string;
-  urlHost: string;
+  urlHost?: string;
   urlPath?: string;
   documentationUrl?: string;
   documentation?: string;
@@ -276,7 +276,7 @@ export interface WorkflowArgs {
 export interface BuildWorkflowArgs {
   instruction: string;
   payload?: Record<string, any>;
-  systems?: Array<SystemInput>;
+  systems?: Array<IntegrationInput>;
   responseSchema?: JSONSchema;
   save?: boolean;
   verbose?: boolean;
@@ -553,7 +553,7 @@ export class SuperglueClient {
     // Enhanced buildWorkflow with log subscription
     async buildWorkflow({instruction, payload, systems, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [SystemInput!]!, $responseSchema: JSONSchema) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $systems: [IntegrationInput!]!, $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, systems: $systems, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
