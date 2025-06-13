@@ -162,6 +162,15 @@ export interface Integration extends BaseConfig {
   icon?: string;
 }
 
+export interface IntegrationInput {
+  id: string;
+  urlHost?: string;
+  urlPath?: string;
+  documentationUrl?: string;
+  documentation?: string;
+  credentials?: Record<string, string>;
+}
+
 export interface Log {
   id: string;
   message: string;
