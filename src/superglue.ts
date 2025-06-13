@@ -273,6 +273,11 @@ export interface BuildWorkflowArgs {
   verbose?: boolean;
 }
 
+export type IntegrationList = {
+  items: Integration[];
+  total: number;
+};
+
 export class SuperglueClient {
     private endpoint: string;
     private apiKey: string;
@@ -311,9 +316,11 @@ export class SuperglueClient {
           inputMapping
           responseMapping
         }
+        integrationIds
         responseSchema
         finalTransform
         inputSchema
+        instruction
     `;
     
     private static configQL = `
@@ -1026,6 +1033,7 @@ export class SuperglueClient {
               inputMapping
               responseMapping
             }
+            integrationIds
             finalTransform
             inputSchema
             responseSchema
@@ -1216,6 +1224,90 @@ export class SuperglueClient {
       `;
       return this.request<{ deleteWorkflow: boolean }>(mutation, { id })
         .then(data => data.deleteWorkflow);
+    }
+
+    async listIntegrations(limit: number = 10, offset: number = 0): Promise<{ items: Integration[], total: number }> {
+      const query = `
+        query ListIntegrations($limit: Int!, $offset: Int!) {
+          listIntegrations(limit: $limit, offset: $offset) {
+            items {
+              id
+              name
+              type
+              urlHost
+              urlPath
+              credentials
+              documentationUrl
+              documentation
+              icon
+              version
+              createdAt
+              updatedAt
+            }
+            total
+          }
+        }
+      `;
+      const response = await this.request<{ listIntegrations: { items: Integration[], total: number } }>(query, { limit, offset });
+      return response.listIntegrations;
+    }
+
+    async getIntegration(id: string): Promise<Integration> {
+      const query = `
+        query GetIntegration($id: ID!) {
+          getIntegration(id: $id) {
+            id
+            name
+            type
+            urlHost
+            urlPath
+            credentials
+            documentationUrl
+            documentation
+            icon
+            version
+            createdAt
+            updatedAt
+          }
+        }
+      `;
+      const response = await this.request<{ getIntegration: Integration }>(query, { id });
+      return response.getIntegration;
+    }
+
+    async upsertIntegration(id: string, input: Partial<Integration>): Promise<Integration> {
+      const mutation = `
+        mutation UpsertIntegration($input: IntegrationInput!) {
+          upsertIntegration(input: $input) {
+            id
+            name
+            type
+            urlHost
+            urlPath
+            credentials
+            documentationUrl
+            documentation
+            icon
+            version
+            createdAt
+            updatedAt
+          }
+        }
+      `;
+      // The backend expects the id to be in the input object
+      const integrationInput = { id, ...input };
+      const response = await this.request<{ upsertIntegration: Integration }>(mutation, { input: integrationInput });
+      return response.upsertIntegration;
+    }
+
+    async deleteIntegration(id: string): Promise<boolean> {
+      const mutation = `
+        mutation DeleteIntegration($id: ID!) {
+          deleteIntegration(id: $id)
+        }
+      `;
+      const response = await this.request<{ deleteIntegration: boolean }>(mutation, { id });
+      return response.deleteIntegration;
     }
 }
   
