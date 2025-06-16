@@ -560,7 +560,7 @@ export class SuperglueClient {
     // Enhanced buildWorkflow with log subscription
     async buildWorkflow({instruction, payload, integrations, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [IntegrationInput!]!, $responseSchema: JSONSchema) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [IntegrationInputRequest!]!, $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, integrations: $integrations, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
