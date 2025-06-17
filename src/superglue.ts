@@ -1040,6 +1040,7 @@ export class SuperglueClient {
                 }
                 dataPath
               }
+              integrationId
               executionMode
               loopSelector
               loopMaxIters
