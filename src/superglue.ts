@@ -121,6 +121,7 @@ export interface TransformConfig extends BaseConfig {
 export interface ExecutionStep {
   id: string;
   apiConfig: ApiConfig;
+  integrationId?: string;
   executionMode?: 'DIRECT' | 'LOOP';
   loopSelector?: JSONata;
   loopMaxIters?: number;
@@ -159,6 +160,7 @@ export interface Integration extends BaseConfig {
   credentials?: Record<string, any>;
   documentationUrl?: string;
   documentation?: string;
+  documentationPending?: boolean;
   icon?: string;
 }
 
@@ -491,6 +493,7 @@ export class SuperglueClient {
             const executionStepInput = {
               id: step.id,
               apiConfig: apiConfigInput,
+              integrationId: step.integrationId,
               executionMode: step.executionMode,
               loopSelector: step.loopSelector,
               loopMaxIters: step.loopMaxIters,
