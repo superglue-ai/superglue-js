@@ -504,6 +504,7 @@ export class SuperglueClient {
             Object.keys(executionStepInput).forEach(key => (executionStepInput as any)[key] === undefined && delete (executionStepInput as any)[key]);
             return executionStepInput;
           }),
+          integrationIds: workflow.integrationIds,
           finalTransform: workflow.finalTransform,
           inputSchema: workflow.inputSchema,
           responseSchema: workflow.responseSchema,
