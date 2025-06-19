@@ -1255,6 +1255,7 @@ export class SuperglueClient {
               credentials
               documentationUrl
               documentation
+              documentationPending
               icon
               version
               createdAt
