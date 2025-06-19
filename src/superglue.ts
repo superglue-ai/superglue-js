@@ -170,6 +170,7 @@ export interface IntegrationInput {
   urlPath?: string;
   documentationUrl?: string;
   documentation?: string;
+  documentationPending?: boolean;
   credentials?: Record<string, string>;
 }
 
@@ -1303,6 +1304,7 @@ export class SuperglueClient {
             credentials
             documentationUrl
             documentation
+            documentationPending
             icon
             version
             createdAt
