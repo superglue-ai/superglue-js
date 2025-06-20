@@ -59,6 +59,12 @@ export enum LogLevel {
   ERROR = "ERROR"
 }
 
+export enum UpsertMode {
+  CREATE = "CREATE",
+  UPDATE = "UPDATE",
+  UPSERT = "UPSERT"
+}
+
 export interface BaseConfig {
   id: string;
   version?: string;
@@ -1293,10 +1299,10 @@ export class SuperglueClient {
       return response.getIntegration;
     }
 
-    async upsertIntegration(id: string, input: Partial<Integration>): Promise<Integration> {
+    async upsertIntegration(id: string, input: Partial<Integration>, mode: UpsertMode = UpsertMode.UPSERT): Promise<Integration> {
       const mutation = `
-        mutation UpsertIntegration($input: IntegrationInput!) {
-          upsertIntegration(input: $input) {
+        mutation UpsertIntegration($input: IntegrationInput!, $mode: UpsertMode) {
+          upsertIntegration(input: $input, mode: $mode) {
             id
             name
             type
@@ -1315,7 +1321,7 @@ export class SuperglueClient {
       `;
       // The backend expects the id to be in the input object
       const integrationInput = { id, ...input };
-      const response = await this.request<{ upsertIntegration: Integration }>(mutation, { input: integrationInput });
+      const response = await this.request<{ upsertIntegration: Integration }>(mutation, { input: integrationInput, mode });
       return response.upsertIntegration;
     }
 
