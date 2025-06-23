@@ -1,6 +1,5 @@
 import axios from "axios";
 import { WebSocketManager, LogSubscriptionOptions, WebSocketSubscription } from "./websocket-manager.js";
-console.log("1.0.0");
 export type JSONSchema = any;
 export type JSONata = string;
 export type Upload = File | Blob;
