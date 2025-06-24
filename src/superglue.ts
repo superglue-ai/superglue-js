@@ -1279,16 +1279,16 @@ export class SuperglueClient {
       return response.listIntegrations;
     }
 
-    async findRelevantIntegrations(instruction: string, limit: number = 10, offset: number = 0): Promise<SuggestedIntegration[]> {
+    async findRelevantIntegrations(instruction: string): Promise<SuggestedIntegration[]> {
       const query = `
-        query FindRelevantIntegrations($instruction: String, $limit: Int, $offset: Int) {
-          findRelevantIntegrations(instruction: $instruction, limit: $limit, offset: $offset) {
+        query FindRelevantIntegrations($instruction: String) {
+          findRelevantIntegrations(instruction: $instruction) {
             id
             reason
           }
         }
       `;
-      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { instruction, limit, offset });
+      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { instruction });
       return response.findRelevantIntegrations;
     }
 
