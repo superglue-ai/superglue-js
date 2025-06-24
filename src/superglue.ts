@@ -1,6 +1,5 @@
 import axios from "axios";
 import { WebSocketManager, LogSubscriptionOptions, WebSocketSubscription } from "./websocket-manager.js";
-
 export type JSONSchema = any;
 export type JSONata = string;
 export type Upload = File | Blob;
@@ -178,6 +177,11 @@ export interface IntegrationInput {
   documentation?: string;
   documentationPending?: boolean;
   credentials?: Record<string, string>;
+}
+
+export interface SuggestedIntegration {
+  id: string;
+  reason: string;
 }
 
 export interface Log {
@@ -1273,6 +1277,19 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ listIntegrations: { items: Integration[], total: number } }>(query, { limit, offset });
       return response.listIntegrations;
+    }
+
+    async findRelevantIntegrations(instruction: string): Promise<SuggestedIntegration[]> {
+      const query = `
+        query FindRelevantIntegrations($instruction: String) {
+          findRelevantIntegrations(instruction: $instruction) {
+            id
+            reason
+          }
+        }
+      `;
+      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { instruction });
+      return response.findRelevantIntegrations;
     }
 
     async getIntegration(id: string): Promise<Integration> {
