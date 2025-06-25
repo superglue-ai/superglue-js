@@ -290,7 +290,7 @@ export interface WorkflowArgs {
 export interface BuildWorkflowArgs {
   instruction: string;
   payload?: Record<string, any>;
-  integrations?: ({ integration: Integration; id?: never } | { integration?: never; id: string })[];
+  integrations?: string[];
   responseSchema?: JSONSchema;
   save?: boolean;
   verbose?: boolean;
@@ -577,7 +577,7 @@ export class SuperglueClient {
     // Enhanced buildWorkflow with log subscription
     async buildWorkflow({instruction, payload, integrations, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [IntegrationInputRequest!]!, $responseSchema: JSONSchema) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [ID!]!, $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, integrations: $integrations, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
