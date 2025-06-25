@@ -182,6 +182,7 @@ export interface IntegrationInput {
 export interface SuggestedIntegration {
   id: string;
   reason: string;
+  savedCredentials: string[];
 }
 
 export interface Log {
@@ -1285,6 +1286,7 @@ export class SuperglueClient {
           findRelevantIntegrations(instruction: $instruction) {
             id
             reason
+            savedCredentials
           }
         }
       `;
