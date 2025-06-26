@@ -182,6 +182,7 @@ export interface IntegrationInput {
 export interface SuggestedIntegration {
   id: string;
   reason: string;
+  savedCredentials: string[];
 }
 
 export interface Log {
@@ -289,7 +290,7 @@ export interface WorkflowArgs {
 export interface BuildWorkflowArgs {
   instruction: string;
   payload?: Record<string, any>;
-  integrations?: ({ integration: Integration; id?: never } | { integration?: never; id: string })[];
+  integrationIds?: string[];
   responseSchema?: JSONSchema;
   save?: boolean;
   verbose?: boolean;
@@ -574,10 +575,10 @@ export class SuperglueClient {
     }
 
     // Enhanced buildWorkflow with log subscription
-    async buildWorkflow({instruction, payload, integrations, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
+    async buildWorkflow({instruction, payload, integrationIds, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrations: [IntegrationInputRequest!]!, $responseSchema: JSONSchema) {
-          buildWorkflow(instruction: $instruction, payload: $payload, integrations: $integrations, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrationIds: [ID!]!, $responseSchema: JSONSchema) {
+          buildWorkflow(instruction: $instruction, payload: $payload, integrationIds: $integrationIds, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
 
@@ -607,7 +608,7 @@ export class SuperglueClient {
         const workflow = await this.request<{ buildWorkflow: Workflow }>(mutation, {
           instruction,
           payload,
-          integrations,
+          integrationIds,
           responseSchema: responseSchema ?? {}
         }).then(data => data.buildWorkflow);
 
@@ -1285,6 +1286,7 @@ export class SuperglueClient {
           findRelevantIntegrations(instruction: $instruction) {
             id
             reason
+            savedCredentials
           }
         }
       `;
