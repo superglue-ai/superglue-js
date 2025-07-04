@@ -235,6 +235,7 @@ export type RequestOptions = {
   retries?: number;
   retryDelay?: number;
   webhookUrl?: string;
+  testMode?: boolean;
 };
 
 export enum SelfHealingMode {
