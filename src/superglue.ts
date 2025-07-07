@@ -1266,7 +1266,6 @@ export class SuperglueClient {
               urlPath
               credentials
               documentationUrl
-              documentation
               documentationPending
               icon
               version
