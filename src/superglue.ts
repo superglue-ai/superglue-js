@@ -150,7 +150,6 @@ export interface WorkflowStepResult {
   rawData?: any;
   transformedData?: any;
   error?: string;
-  metadata?: Record<string, any>;
 }
 
 export interface WorkflowResult extends BaseResult {
@@ -468,7 +467,6 @@ export class SuperglueClient {
               rawData
               transformedData
               error
-              metadata
             }
             error
             startedAt
