@@ -166,6 +166,7 @@ export interface Integration extends BaseConfig {
   documentationUrl?: string;
   documentation?: string;
   documentationPending?: boolean;
+  specificInstructions?: string;
   icon?: string;
 }
 
@@ -176,6 +177,7 @@ export interface IntegrationInput {
   documentationUrl?: string;
   documentation?: string;
   documentationPending?: boolean;
+  specificInstructions?: string;
   credentials?: Record<string, string>;
 }
 
@@ -1267,6 +1269,7 @@ export class SuperglueClient {
               credentials
               documentationUrl
               documentationPending
+              specificInstructions
               icon
               version
               createdAt
@@ -1307,6 +1310,7 @@ export class SuperglueClient {
             documentationUrl
             documentation
             documentationPending
+            specificInstructions
             icon
             version
             createdAt
@@ -1331,6 +1335,7 @@ export class SuperglueClient {
             documentationUrl
             documentation
             documentationPending
+            specificInstructions
             icon
             version
             createdAt
