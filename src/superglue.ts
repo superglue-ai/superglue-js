@@ -3,7 +3,6 @@ import { WebSocketManager, LogSubscriptionOptions, WebSocketSubscription } from 
 export type JSONSchema = any;
 export type JSONata = string;
 export type Upload = File | Blob;
-console.log("Superglue client Hi");
 
 export enum HttpMethod {
   GET = "GET",
