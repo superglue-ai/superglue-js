@@ -84,6 +84,7 @@ export interface Pagination {
   type: PaginationType;
   pageSize?: string;
   cursorPath?: string;
+  stopCondition?: string;
 }
 
 export interface ApiConfig extends BaseConfig {
@@ -333,6 +334,7 @@ export class SuperglueClient {
               type
               pageSize
               cursorPath
+              stopCondition
             }
             dataPath
           }
@@ -372,6 +374,7 @@ export class SuperglueClient {
           type
           pageSize
           cursorPath
+          stopCondition
         }
         dataPath
       }
@@ -500,6 +503,7 @@ export class SuperglueClient {
                 type: step.apiConfig.pagination.type,
                 ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
                 ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
+                ...(step.apiConfig.pagination.stopCondition !== undefined && { stopCondition: step.apiConfig.pagination.stopCondition }),
               } : undefined,
               dataPath: step.apiConfig.dataPath,
               version: step.apiConfig.version,
@@ -668,6 +672,7 @@ export class SuperglueClient {
             type: endpoint.pagination.type,
             ...(endpoint.pagination.pageSize !== undefined && { pageSize: endpoint.pagination.pageSize }),
             ...(endpoint.pagination.cursorPath !== undefined && { cursorPath: endpoint.pagination.cursorPath }),
+            ...(endpoint.pagination.stopCondition !== undefined && { stopCondition: endpoint.pagination.stopCondition }),
           } : undefined,
           dataPath: endpoint.dataPath,
           version: endpoint.version,
@@ -885,6 +890,8 @@ export class SuperglueClient {
               pagination {
                 type
                 pageSize
+                cursorPath
+                stopCondition
               }
               dataPath
             }
@@ -969,6 +976,8 @@ export class SuperglueClient {
             pagination {
               type
               pageSize
+              cursorPath
+              stopCondition
             }
             dataPath
           }
@@ -1053,6 +1062,7 @@ export class SuperglueClient {
                   type
                   pageSize
                   cursorPath
+                  stopCondition
                 }
                 dataPath
               }
@@ -1110,6 +1120,8 @@ export class SuperglueClient {
             pagination {
               type
               pageSize
+              cursorPath
+              stopCondition
             }
             dataPath
           }
@@ -1216,6 +1228,8 @@ export class SuperglueClient {
             pagination {
               type
               pageSize
+              cursorPath
+              stopCondition
             }
             dataPath
           }
