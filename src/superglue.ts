@@ -1,5 +1,5 @@
 import axios from "axios";
-import { WebSocketManager, LogSubscriptionOptions, WebSocketSubscription } from "./websocket-manager.js";
+import { LogSubscriptionOptions, WebSocketManager, WebSocketSubscription } from "./websocket-manager.js";
 export type JSONSchema = any;
 export type JSONata = string;
 export type Upload = File | Blob;
@@ -142,6 +142,7 @@ export interface Workflow extends BaseConfig {
   inputSchema?: JSONSchema;
   responseSchema?: JSONSchema;
   instruction?: string;
+  originalResponseSchema?: JSONSchema;
 }
 
 export interface WorkflowStepResult {
@@ -167,6 +168,8 @@ export interface Integration extends BaseConfig {
   documentationUrl?: string;
   documentation?: string;
   documentationPending?: boolean;
+  openApiSchema?: string;
+  openApiUrl?: string;
   specificInstructions?: string;
   icon?: string;
 }
@@ -347,6 +350,7 @@ export class SuperglueClient {
         }
         integrationIds
         responseSchema
+        originalResponseSchema
         finalTransform
         inputSchema
         instruction
@@ -1283,6 +1287,8 @@ export class SuperglueClient {
               credentials
               documentationUrl
               documentationPending
+              openApiSchema
+              openApiUrl
               specificInstructions
               icon
               version
@@ -1324,6 +1330,8 @@ export class SuperglueClient {
             documentationUrl
             documentation
             documentationPending
+            openApiSchema
+            openApiUrl
             specificInstructions
             icon
             version
@@ -1349,6 +1357,8 @@ export class SuperglueClient {
             documentationUrl
             documentation
             documentationPending
+            openApiSchema
+            openApiUrl
             specificInstructions
             icon
             version
