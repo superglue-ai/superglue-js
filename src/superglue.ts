@@ -76,6 +76,8 @@ export interface BaseResult {
   success: boolean;
   data?: any;
   error?: string;
+  headers?: Record<string, any>;
+  statusCode?: number;
   startedAt: Date;
   completedAt: Date;
 }
@@ -647,6 +649,8 @@ export class SuperglueClient {
             success
             data
             error
+            headers
+            statusCode
             startedAt
             completedAt
             ${SuperglueClient.configQL}
@@ -841,6 +845,8 @@ export class SuperglueClient {
               success
               data
               error
+              headers
+              statusCode
               startedAt
               completedAt
               ${SuperglueClient.configQL}
@@ -861,6 +867,8 @@ export class SuperglueClient {
             success
             data
             error
+            headers
+            statusCode
             startedAt
             completedAt
             ${SuperglueClient.configQL}
