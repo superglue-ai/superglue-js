@@ -173,6 +173,7 @@ export interface Integration extends BaseConfig {
   openApiSchema?: string;
   openApiUrl?: string;
   specificInstructions?: string;
+  documentationKeywords?: string[];
   icon?: string;
 }
 
@@ -184,6 +185,7 @@ export interface IntegrationInput {
   documentation?: string;
   documentationPending?: boolean;
   specificInstructions?: string;
+  documentationKeywords?: string[];
   credentials?: Record<string, string>;
 }
 
@@ -1298,6 +1300,7 @@ export class SuperglueClient {
               openApiSchema
               openApiUrl
               specificInstructions
+              documentationKeywords
               icon
               version
               createdAt
@@ -1341,6 +1344,7 @@ export class SuperglueClient {
             openApiSchema
             openApiUrl
             specificInstructions
+            documentationKeywords
             icon
             version
             createdAt
@@ -1368,6 +1372,7 @@ export class SuperglueClient {
             openApiSchema
             openApiUrl
             specificInstructions
+            documentationKeywords
             icon
             version
             createdAt
