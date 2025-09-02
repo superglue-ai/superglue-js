@@ -26,7 +26,7 @@ export enum FileType {
   JSON = "JSON",
   XML = "XML",
   EXCEL = "EXCEL",
-  FIXED_WIDTH = "FIXED_WIDTH",
+  RAW = "RAW",
   AUTO = "AUTO"
 }
 
