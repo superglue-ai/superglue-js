@@ -1319,9 +1319,26 @@ export class SuperglueClient {
       const query = `
         query FindRelevantIntegrations($instruction: String) {
           findRelevantIntegrations(instruction: $instruction) {
-            id
             reason
-            savedCredentials
+            integration {
+              id
+              name
+              type
+              urlHost
+              urlPath
+              credentials
+              documentationUrl
+              documentation
+              documentationPending
+              openApiUrl
+              openApiSchema
+              specificInstructions
+              documentationKeywords
+              icon
+              version
+              createdAt
+              updatedAt
+            }
           }
         }
       `;
