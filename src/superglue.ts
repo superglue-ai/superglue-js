@@ -317,6 +317,7 @@ export type WorkflowScheduleInput = {
   id?: string;
   workflowId?: string;
   cronExpression?: string;
+  timezone?: string;
   enabled?: boolean;
   payload?: Record<string, any>;
   options?: RequestOptions;
@@ -326,6 +327,7 @@ export type WorkflowSchedule = {
   id: string;
   workflowId: string;
   cronExpression: string;
+  timezone: string;
   enabled: boolean;
   payload?: Record<string, any>;
   options?: RequestOptions;
@@ -387,6 +389,7 @@ export class SuperglueClient {
       id
       workflowId
       cronExpression
+      timezone
       enabled
       payload
       options
