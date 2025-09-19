@@ -590,15 +590,13 @@ export class SuperglueClient {
       }
     }
 
-    // Enhanced buildWorkflow with log subscription
     async buildWorkflow({instruction, payload, integrationIds, responseSchema, save = true, verbose = true}: BuildWorkflowArgs): Promise<Workflow> {
       const mutation = `
-        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrationIds: [ID!]!, $responseSchema: JSONSchema) {
+        mutation BuildWorkflow($instruction: String!, $payload: JSON, $integrationIds: [ID!], $responseSchema: JSONSchema) {
           buildWorkflow(instruction: $instruction, payload: $payload, integrationIds: $integrationIds, responseSchema: $responseSchema) {${SuperglueClient.workflowQL}}
         }
       `;
 
-      // Set up log subscription if verbose is enabled
       let logSubscription: WebSocketSubscription | undefined;
       if (verbose) {
         try {
