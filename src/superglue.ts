@@ -313,6 +313,30 @@ export type IntegrationList = {
   total: number;
 };
 
+export type WorkflowScheduleInput = {
+  id?: string;
+  workflowId?: string;
+  cronExpression?: string;
+  timezone?: string;
+  enabled?: boolean;
+  payload?: Record<string, any>;
+  options?: RequestOptions;
+}
+
+export type WorkflowSchedule = {
+  id: string;
+  workflowId: string;
+  cronExpression: string;
+  timezone: string;
+  enabled: boolean;
+  payload?: Record<string, any>;
+  options?: RequestOptions;
+  lastRunAt?: Date;
+  nextRunAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export class SuperglueClient {
     private endpoint: string;
     private apiKey: string;
@@ -359,6 +383,20 @@ export class SuperglueClient {
         finalTransform
         inputSchema
         instruction
+    `;
+
+    private static workflowScheduleQL = `
+      id
+      workflowId
+      cronExpression
+      timezone
+      enabled
+      payload
+      options
+      lastRunAt
+      nextRunAt
+      createdAt
+      updatedAt
     `;
     
     private static configQL = `
@@ -1109,6 +1147,40 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ listWorkflows: { items: Workflow[], total: number } }>(query, { limit, offset });
       return response.listWorkflows;
+    }
+
+    async listWorkflowSchedules(workflowId: string): Promise<WorkflowSchedule[]> {
+      const query = `
+        query ListWorkflowSchedules ($workflowId: String!) {
+          listWorkflowSchedules(workflowId: $workflowId) {
+            ${SuperglueClient.workflowScheduleQL}
+          }
+        }
+      `;
+      const response = await this.request<{ listWorkflowSchedules: WorkflowSchedule[] }>(query, { workflowId });
+      return response.listWorkflowSchedules;
+    }
+
+    async upsertWorkflowSchedule(schedule: WorkflowScheduleInput): Promise<WorkflowSchedule> {
+      const mutation = `
+        mutation UpsertWorkflowSchedule($schedule: WorkflowScheduleInput!) {
+          upsertWorkflowSchedule(schedule: $schedule) {
+            ${SuperglueClient.workflowScheduleQL}
+          }
+        }
+      `;
+      const response = await this.request<{ upsertWorkflowSchedule: WorkflowSchedule }>(mutation, { schedule });
+      return response.upsertWorkflowSchedule;
+    }
+
+    async deleteWorkflowSchedule(id: string): Promise<boolean> {
+      const mutation = `
+        mutation DeleteWorkflowSchedule($id: ID!) {
+          deleteWorkflowSchedule(id: $id)
+        }
+      `;
+      const response = await this.request<{ deleteWorkflowSchedule: boolean }>(mutation, { id });
+      return response.deleteWorkflowSchedule;
     }
 
     async upsertApi(id: string, input: Partial<ApiConfig>): Promise<ApiConfig> {
