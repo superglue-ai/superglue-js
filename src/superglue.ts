@@ -190,12 +190,6 @@ export interface IntegrationInput {
   credentials?: Record<string, string>;
 }
 
-export interface SuggestedIntegration {
-  id: string;
-  reason: string;
-  savedCredentials: string[];
-}
-
 export interface Log {
   id: string;
   message: string;
@@ -1385,7 +1379,7 @@ export class SuperglueClient {
       return response.listIntegrations;
     }
 
-    async findRelevantIntegrations(instruction: string): Promise<SuggestedIntegration[]> {
+    async findRelevantIntegrations(instruction: string): Promise<Integration[]> {
       const query = `
         query FindRelevantIntegrations($instruction: String) {
           findRelevantIntegrations(instruction: $instruction) {
@@ -1412,7 +1406,7 @@ export class SuperglueClient {
           }
         }
       `;
-      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { instruction });
+      const response = await this.request<{ findRelevantIntegrations: Integration[] }>(query, { instruction });
       return response.findRelevantIntegrations;
     }
 
