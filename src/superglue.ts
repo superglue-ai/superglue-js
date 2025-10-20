@@ -85,6 +85,7 @@ export interface BaseResult {
 
 export interface Pagination {
   type: PaginationType;
+  handler?: string;
   pageSize?: string;
   cursorPath?: string;
   stopCondition?: string;
@@ -127,11 +128,36 @@ export interface TransformConfig extends BaseConfig {
   responseMapping?: JSONata;
 }
 
+export interface CodeConfig {
+  stepInstruction?: string;
+  code: string;
+  pagination?: Pagination;
+}
+
+export interface CodeConfigInput {
+  stepInstruction?: string;
+  code: string;
+  pagination?: Pagination;
+}
+
 export interface ExecutionStep {
   id: string;
-  apiConfig: ApiConfig;
+  apiConfig?: ApiConfig;
+  codeConfig?: CodeConfig;
   integrationId?: string;
   executionMode?: 'DIRECT' | 'LOOP';
+  loopSelector?: JSONata;
+  loopMaxIters?: number;
+  inputMapping?: JSONata;
+  responseMapping?: JSONata;
+}
+
+export interface ExecutionStepInput {
+  id: string;
+  apiConfig?: ApiConfig;
+  codeConfig?: CodeConfigInput;
+  integrationId?: string;
+  executionMode?: string;
   loopSelector?: JSONata;
   loopMaxIters?: number;
   inputMapping?: JSONata;
@@ -180,6 +206,7 @@ export interface Integration extends BaseConfig {
 
 export interface IntegrationInput {
   id: string;
+  name?: string;
   urlHost?: string;
   urlPath?: string;
   documentationUrl?: string;
@@ -191,9 +218,18 @@ export interface IntegrationInput {
 }
 
 export interface SuggestedIntegration {
-  id: string;
   reason: string;
-  savedCredentials: string[];
+  integration: Integration;
+}
+
+export interface TenantInfo {
+  email?: string;
+  emailEntrySkipped: boolean;
+}
+
+export interface OAuthClientCredentials {
+  client_id: string;
+  client_secret: string;
 }
 
 export interface Log {
@@ -234,9 +270,20 @@ export type TransformInputRequest = {
   endpoint?: TransformConfig;
 };
 
+export interface WorkflowInput {
+  id: string;
+  steps?: ExecutionStepInput[];
+  integrationIds?: string[];
+  finalTransform?: JSONata;
+  inputSchema?: JSONSchema;
+  responseSchema?: JSONSchema;
+  version?: string;
+  instruction?: string;
+}
+
 export type WorkflowInputRequest = {
   id?: string;
-  workflow?: Workflow;
+  workflow?: WorkflowInput;
 };
 
 export type RequestOptions = {
@@ -364,11 +411,23 @@ export class SuperglueClient {
             authentication
             pagination {
               type
+              handler
               pageSize
               cursorPath
               stopCondition
             }
             dataPath
+          }
+          codeConfig {
+            stepInstruction
+            code
+            pagination {
+              type
+              handler
+              pageSize
+              cursorPath
+              stopCondition
+            }
           }
           integrationId
           executionMode
@@ -533,33 +592,54 @@ export class SuperglueClient {
         const workflowInput = {
           id: workflow.id,
           steps: workflow.steps.map(step => {
-            const apiConfigInput = {
-              id: step.apiConfig.id,
-              urlHost: step.apiConfig.urlHost,
-              instruction: step.apiConfig.instruction,
-              urlPath: step.apiConfig.urlPath,
-              method: step.apiConfig.method,
-              queryParams: step.apiConfig.queryParams,
-              headers: step.apiConfig.headers,
-              body: step.apiConfig.body,
-              documentationUrl: step.apiConfig.documentationUrl,
-              responseSchema: step.apiConfig.responseSchema,
-              responseMapping: step.apiConfig.responseMapping,
-              authentication: step.apiConfig.authentication,
-              pagination: step.apiConfig.pagination ? {
-                type: step.apiConfig.pagination.type,
-                ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
-                ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
-                ...(step.apiConfig.pagination.stopCondition !== undefined && { stopCondition: step.apiConfig.pagination.stopCondition }),
-              } : undefined,
-              dataPath: step.apiConfig.dataPath,
-              version: step.apiConfig.version,
-            };
-            Object.keys(apiConfigInput).forEach(key => (apiConfigInput as any)[key] === undefined && delete (apiConfigInput as any)[key]);
+            let apiConfigInput: any;
+            if (step.apiConfig) {
+              apiConfigInput = {
+                id: step.apiConfig.id,
+                urlHost: step.apiConfig.urlHost,
+                instruction: step.apiConfig.instruction,
+                urlPath: step.apiConfig.urlPath,
+                method: step.apiConfig.method,
+                queryParams: step.apiConfig.queryParams,
+                headers: step.apiConfig.headers,
+                body: step.apiConfig.body,
+                documentationUrl: step.apiConfig.documentationUrl,
+                responseSchema: step.apiConfig.responseSchema,
+                responseMapping: step.apiConfig.responseMapping,
+                authentication: step.apiConfig.authentication,
+                pagination: step.apiConfig.pagination ? {
+                  type: step.apiConfig.pagination.type,
+                  ...(step.apiConfig.pagination.handler !== undefined && { handler: step.apiConfig.pagination.handler }),
+                  ...(step.apiConfig.pagination.pageSize !== undefined && { pageSize: step.apiConfig.pagination.pageSize }),
+                  ...(step.apiConfig.pagination.cursorPath !== undefined && { cursorPath: step.apiConfig.pagination.cursorPath }),
+                  ...(step.apiConfig.pagination.stopCondition !== undefined && { stopCondition: step.apiConfig.pagination.stopCondition }),
+                } : undefined,
+                dataPath: step.apiConfig.dataPath,
+                version: step.apiConfig.version,
+              };
+              Object.keys(apiConfigInput).forEach(key => (apiConfigInput as any)[key] === undefined && delete (apiConfigInput as any)[key]);
+            }
+
+            let codeConfigInput: any;
+            if (step.codeConfig) {
+              codeConfigInput = {
+                stepInstruction: step.codeConfig.stepInstruction,
+                code: step.codeConfig.code,
+                pagination: step.codeConfig.pagination ? {
+                  type: step.codeConfig.pagination.type,
+                  ...(step.codeConfig.pagination.handler !== undefined && { handler: step.codeConfig.pagination.handler }),
+                  ...(step.codeConfig.pagination.pageSize !== undefined && { pageSize: step.codeConfig.pagination.pageSize }),
+                  ...(step.codeConfig.pagination.cursorPath !== undefined && { cursorPath: step.codeConfig.pagination.cursorPath }),
+                  ...(step.codeConfig.pagination.stopCondition !== undefined && { stopCondition: step.codeConfig.pagination.stopCondition }),
+                } : undefined,
+              };
+              Object.keys(codeConfigInput).forEach(key => (codeConfigInput as any)[key] === undefined && delete (codeConfigInput as any)[key]);
+            }
             
             const executionStepInput = {
               id: step.id,
-              apiConfig: apiConfigInput,
+              ...(apiConfigInput && { apiConfig: apiConfigInput }),
+              ...(codeConfigInput && { codeConfig: codeConfigInput }),
               integrationId: step.integrationId,
               executionMode: step.executionMode,
               loopSelector: step.loopSelector,
@@ -717,6 +797,7 @@ export class SuperglueClient {
           authentication: endpoint.authentication,
           pagination: endpoint.pagination ? {
             type: endpoint.pagination.type,
+            ...(endpoint.pagination.handler !== undefined && { handler: endpoint.pagination.handler }),
             ...(endpoint.pagination.pageSize !== undefined && { pageSize: endpoint.pagination.pageSize }),
             ...(endpoint.pagination.cursorPath !== undefined && { cursorPath: endpoint.pagination.cursorPath }),
             ...(endpoint.pagination.stopCondition !== undefined && { stopCondition: endpoint.pagination.stopCondition }),
@@ -1117,6 +1198,17 @@ export class SuperglueClient {
                 }
                 dataPath
               }
+              codeConfig {
+                stepInstruction
+                code
+                pagination {
+                  type
+                  handler
+                  pageSize
+                  cursorPath
+                  stopCondition
+                }
+              }
               integrationId
               executionMode
               loopSelector
@@ -1482,6 +1574,46 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ deleteIntegration: boolean }>(mutation, { id });
       return response.deleteIntegration;
+    }
+
+    async generateInstructions(integrations: IntegrationInput[]): Promise<string[]> {
+      const query = `
+        query GenerateInstructions($integrations: [IntegrationInput!]!) {
+          generateInstructions(integrations: $integrations)
+        }
+      `;
+      const response = await this.request<{ generateInstructions: string[] }>(query, { integrations });
+      return response.generateInstructions;
+    }
+
+    async cacheOauthClientCredentials(clientCredentialsUid: string, clientId: string, clientSecret: string): Promise<boolean> {
+      const mutation = `
+        mutation CacheOauthClientCredentials($clientCredentialsUid: String!, $clientId: String!, $clientSecret: String!) {
+          cacheOauthClientCredentials(clientCredentialsUid: $clientCredentialsUid, clientId: $clientId, clientSecret: $clientSecret)
+        }
+      `;
+      const response = await this.request<{ cacheOauthClientCredentials: boolean }>(mutation, { 
+        clientCredentialsUid, 
+        clientId, 
+        clientSecret 
+      });
+      return response.cacheOauthClientCredentials;
+    }
+
+    async getOAuthClientCredentials(templateId?: string, clientCredentialsUid?: string): Promise<OAuthClientCredentials> {
+      const mutation = `
+        mutation GetOAuthClientCredentials($templateId: ID, $clientCredentialsUid: String) {
+          getOAuthClientCredentials(templateId: $templateId, clientCredentialsUid: $clientCredentialsUid) {
+            client_id
+            client_secret
+          }
+        }
+      `;
+      const response = await this.request<{ getOAuthClientCredentials: OAuthClientCredentials }>(mutation, { 
+        templateId, 
+        clientCredentialsUid 
+      });
+      return response.getOAuthClientCredentials;
     }
 }
   
