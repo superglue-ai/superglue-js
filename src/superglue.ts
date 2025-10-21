@@ -196,6 +196,16 @@ export interface SuggestedIntegration {
   savedCredentials: string[];
 }
 
+export interface SuggestedTool {
+  id: string;
+  instruction?: string;
+  steps: Array<{
+    integrationId?: string;
+    instruction?: string;
+  }>;
+  reason: string;
+}
+
 export interface Log {
   id: string;
   message: string;
@@ -1385,10 +1395,10 @@ export class SuperglueClient {
       return response.listIntegrations;
     }
 
-    async findRelevantIntegrations(instruction: string): Promise<SuggestedIntegration[]> {
+    async findRelevantIntegrations(searchTerms: string): Promise<SuggestedIntegration[]> {
       const query = `
-        query FindRelevantIntegrations($instruction: String) {
-          findRelevantIntegrations(instruction: $instruction) {
+        query FindRelevantIntegrations($searchTerms: String) {
+          findRelevantIntegrations(searchTerms: $searchTerms) {
             reason
             integration {
               id
@@ -1412,8 +1422,26 @@ export class SuperglueClient {
           }
         }
       `;
-      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { instruction });
+      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { searchTerms });
       return response.findRelevantIntegrations;
+    }
+
+    async findRelevantTools(searchTerms?: string): Promise<SuggestedTool[]> {
+      const query = `
+        query FindRelevantTools($searchTerms: String) {
+          findRelevantTools(searchTerms: $searchTerms) {
+            id
+            instruction
+            steps {
+              integrationId
+              instruction
+            }
+            reason
+          }
+        }
+      `;
+      const response = await this.request<{ findRelevantTools: SuggestedTool[] }>(query, { searchTerms });
+      return response.findRelevantTools;
     }
 
     async getIntegration(id: string): Promise<Integration> {
