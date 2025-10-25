@@ -199,6 +199,8 @@ export interface SuggestedIntegration {
 export interface SuggestedTool {
   id: string;
   instruction?: string;
+  inputSchema?: JSONSchema;
+  responseSchema?: JSONSchema;
   steps: Array<{
     integrationId?: string;
     instruction?: string;
@@ -1432,6 +1434,8 @@ export class SuperglueClient {
           findRelevantTools(searchTerms: $searchTerms) {
             id
             instruction
+            inputSchema
+            responseSchema
             steps {
               integrationId
               instruction
