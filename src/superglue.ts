@@ -216,11 +216,7 @@ export interface Log {
   runId?: string;
 }
 
-export type RunResult = ApiResult | ExtractResult | TransformResult | WorkflowResult;
-
-export type TransformResult = BaseResult & {
-  config: TransformConfig;
-};
+export type RunResult = ApiResult | WorkflowResult;
 
 export type ExtractResult = BaseResult & {
   config: ExtractConfig;
@@ -283,13 +279,6 @@ export interface ApiCallArgs {
   endpoint?: ApiConfig;
   payload?: Record<string, any>;
   credentials?: Record<string, string>;
-  options?: RequestOptions;
-}
-
-export interface TransformArgs {
-  id?: string;
-  endpoint?: TransformConfig;
-  data: Record<string, any>;
   options?: RequestOptions;
 }
 
@@ -436,33 +425,6 @@ export class SuperglueClient {
           stopCondition
         }
         dataPath
-      }
-      ... on ExtractConfig {
-        id
-        version
-        createdAt
-        updatedAt
-        urlHost
-        urlPath
-        instruction
-        queryParams
-        method
-        headers
-        body
-        documentationUrl
-        decompressionMethod
-        authentication
-        fileType
-        dataPath
-      }
-      ... on TransformConfig {
-        id
-        version
-        createdAt
-        updatedAt
-        responseSchema
-        responseMapping
-        instruction
       }
       ... on Workflow {
         ${SuperglueClient.workflowQL}
@@ -842,50 +804,6 @@ export class SuperglueClient {
         options
       }).then(data => data.extract);
     }
-  
-    async transform<T = any>({
-      id,
-      endpoint,
-      data,
-      options
-    }: TransformArgs): Promise<TransformResult & { data: T }> {
-      const mutation = `
-        mutation Transform($input: TransformInputRequest!, $data: JSON!, $options: RequestOptions) {
-          transform(input: $input, data: $data, options: $options) {
-            id
-            success
-            data
-            error
-            startedAt
-            completedAt
-            ${SuperglueClient.configQL}
-          }
-        }
-      `;
-  
-      let gqlInput: Partial<TransformInputRequest> = {};
-      if (id) {
-        gqlInput = { id };
-      } else if (endpoint) {
-        const transformInput = {
-          id: endpoint.id,
-          instruction: endpoint.instruction,
-          responseSchema: endpoint.responseSchema,
-          responseMapping: endpoint.responseMapping,
-          version: endpoint.version,
-        };
-        Object.keys(transformInput).forEach(key => (transformInput as any)[key] === undefined && delete (transformInput as any)[key]);
-        gqlInput = { endpoint: transformInput };
-      } else {
-        throw new Error("Either id or endpoint must be provided for transform.");
-      }
-
-      return this.request<{ transform: TransformResult & { data: T } }>(mutation, {
-        input: gqlInput,
-        data,
-        options
-      }).then(data => data.transform);
-    }
 
     async listRuns(limit: number = 100, offset: number = 0, configId?: string): Promise<{ items: RunResult[], total: number }> {
       const query = `
@@ -966,56 +884,6 @@ export class SuperglueClient {
       return response.listApis;
     }
 
-    async listTransforms(limit: number = 10, offset: number = 0): Promise<{ items: TransformConfig[], total: number }> {
-      const query = `
-        query ListTransforms($limit: Int!, $offset: Int!) {
-          listTransforms(limit: $limit, offset: $offset) {
-            items {
-              id
-              version
-              createdAt
-              updatedAt
-              responseSchema
-              responseMapping
-              instruction
-            }
-            total
-          }
-        }
-      `;
-      const response = await this.request<{ listTransforms: { items: TransformConfig[], total: number } }>(query, { limit, offset });
-      return response.listTransforms;
-    }
-
-    async listExtracts(limit: number = 10, offset: number = 0): Promise<{ items: ExtractConfig[], total: number }> {
-      const query = `
-        query ListExtracts($limit: Int!, $offset: Int!) {
-          listExtracts(limit: $limit, offset: $offset) {
-            items {
-              id
-              version
-              createdAt
-              updatedAt
-              urlHost
-              urlPath
-              instruction
-              queryParams
-              method
-              headers
-              body
-              documentationUrl
-              decompressionMethod
-              authentication
-              fileType
-              dataPath
-            }
-            total
-          }
-        }
-      `;
-      const response = await this.request<{ listExtracts: { items: ExtractConfig[], total: number } }>(query, { limit, offset });
-      return response.listExtracts;
-    }
 
     async getApi(id: string): Promise<ApiConfig> {
       const query = `
@@ -1050,50 +918,6 @@ export class SuperglueClient {
       return response.getApi;
     }
 
-    async getTransform(id: string): Promise<TransformConfig> {
-      const query = `
-        query GetTransform($id: ID!) {
-          getTransform(id: $id) {
-            id
-            version
-            createdAt
-            updatedAt
-            responseSchema
-            responseMapping
-            instruction
-          }
-        }
-      `;
-      const response = await this.request<{ getTransform: TransformConfig }>(query, { id });
-      return response.getTransform;
-    }
-
-    async getExtract(id: string): Promise<ExtractConfig> {
-      const query = `
-        query GetExtract($id: ID!) {
-          getExtract(id: $id) {
-            id
-            version
-            createdAt
-            updatedAt
-            urlHost
-            urlPath
-            instruction
-            queryParams
-            method
-            headers
-            body
-            documentationUrl
-            decompressionMethod
-            authentication
-            fileType
-            dataPath
-          }
-        }
-      `;
-      const response = await this.request<{ getExtract: ExtractConfig }>(query, { id });
-      return response.getExtract;
-    }
 
     async getWorkflow(id: string): Promise<Workflow> {
       const query = `
@@ -1236,71 +1060,6 @@ export class SuperglueClient {
       `;
       const response = await this.request<{ deleteApi: boolean }>(mutation, { id });
       return response.deleteApi;
-    }
-
-    async upsertExtraction(id: string, input: Partial<ExtractConfig>): Promise<ExtractConfig> {
-      const mutation = `
-        mutation UpsertExtraction($id: ID!, $input: JSON!) {
-          upsertExtraction(id: $id, input: $input) {
-            id
-            version
-            createdAt
-            updatedAt
-            urlHost
-            urlPath
-            instruction
-            queryParams
-            method
-            headers
-            body
-            documentationUrl
-            decompressionMethod
-            authentication
-            fileType
-            dataPath
-          }
-        }
-      `;
-      const response = await this.request<{ upsertExtraction: ExtractConfig }>(mutation, { id, input });
-      return response.upsertExtraction;
-    }
-
-    async deleteExtraction(id: string): Promise<boolean> {
-      const mutation = `
-        mutation DeleteExtraction($id: ID!) {
-          deleteExtraction(id: $id)
-        }
-      `;
-      const response = await this.request<{ deleteExtraction: boolean }>(mutation, { id });
-      return response.deleteExtraction;
-    }
-
-    async upsertTransformation(id: string, input: Partial<TransformConfig>): Promise<TransformConfig> {
-      const mutation = `
-        mutation UpsertTransformation($id: ID!, $input: JSON!) {
-          upsertTransformation(id: $id, input: $input) {
-            id
-            version
-            createdAt
-            updatedAt
-            responseSchema
-            responseMapping
-            instruction
-          }
-        }
-      `;
-      const response = await this.request<{ upsertTransformation: TransformConfig }>(mutation, { id, input });
-      return response.upsertTransformation;
-    }
-
-    async deleteTransformation(id: string): Promise<boolean> {
-      const mutation = `
-        mutation DeleteTransformation($id: ID!) {
-          deleteTransformation(id: $id)
-        }
-      `;
-      const response = await this.request<{ deleteTransformation: boolean }>(mutation, { id });
-      return response.deleteTransformation;
     }
 
     async updateApiConfigId(oldId: string, newId: string): Promise<ApiConfig> {
