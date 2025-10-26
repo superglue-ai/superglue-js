@@ -121,12 +121,6 @@ export interface ExtractConfig extends BaseConfig {
   dataPath?: string;
 }
 
-export interface TransformConfig extends BaseConfig {
-  instruction: string;
-  responseSchema: JSONSchema;
-  responseMapping?: JSONata;
-}
-
 export interface ExecutionStep {
   id: string;
   apiConfig: ApiConfig;
@@ -237,11 +231,6 @@ export type ExtractInputRequest = {
   file?: Upload;
 };
 
-export type TransformInputRequest = {
-  id?: string;
-  endpoint?: TransformConfig;
-};
-
 export type WorkflowInputRequest = {
   id?: string;
   workflow?: Workflow;
@@ -263,16 +252,6 @@ export enum SelfHealingMode {
     REQUEST_ONLY = "REQUEST_ONLY",
     DISABLED = "DISABLED"
 }
-
-export type ResultList = {
-  items: RunResult[];
-  total: number;
-};
-
-export type ConfigList = {
-  items: ApiConfig[];
-  total: number;
-};
 
 export interface ApiCallArgs {
   id?: string;
@@ -309,6 +288,7 @@ export interface BuildWorkflowArgs {
   verbose?: boolean;
 }
 
+// UNUSED: IntegrationList is defined but never used (methods return inline { items: Integration[], total: number } instead)
 export type IntegrationList = {
   items: Integration[];
   total: number;
