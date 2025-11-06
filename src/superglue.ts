@@ -26,6 +26,10 @@ export enum FileType {
   JSON = "JSON",
   XML = "XML",
   EXCEL = "EXCEL",
+  HTML = "HTML",
+  PDF = "PDF",
+  DOCX = "DOCX",
+  ZIP = "ZIP",
   RAW = "RAW",
   AUTO = "AUTO"
 }
