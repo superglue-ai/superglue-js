@@ -127,6 +127,7 @@ export interface ExtractConfig extends BaseConfig {
 
 export interface ExecutionStep {
   id: string;
+  modify?: boolean;
   apiConfig: ApiConfig;
   integrationId?: string;
   executionMode?: 'DIRECT' | 'LOOP';
@@ -186,12 +187,6 @@ export interface IntegrationInput {
   specificInstructions?: string;
   documentationKeywords?: string[];
   credentials?: Record<string, string>;
-}
-
-export interface SuggestedIntegration {
-  id: string;
-  reason: string;
-  savedCredentials: string[];
 }
 
 export interface SuggestedTool {
@@ -334,6 +329,7 @@ export class SuperglueClient {
         updatedAt
         steps {
           id
+          modify
           apiConfig {
             id
             urlHost
@@ -517,6 +513,7 @@ export class SuperglueClient {
             
             const executionStepInput = {
               id: step.id,
+              modify: step.modify,
               apiConfig: apiConfigInput,
               integrationId: step.integrationId,
               executionMode: step.executionMode,
@@ -913,6 +910,7 @@ export class SuperglueClient {
             updatedAt
             steps {
               id
+              modify
               apiConfig {
                 id
                 version
@@ -1140,7 +1138,7 @@ export class SuperglueClient {
       return response.listIntegrations;
     }
 
-    async findRelevantIntegrations(searchTerms: string): Promise<SuggestedIntegration[]> {
+    async findRelevantIntegrations(searchTerms: string): Promise<Integration[]> {
       const query = `
         query FindRelevantIntegrations($searchTerms: String) {
           findRelevantIntegrations(searchTerms: $searchTerms) {
@@ -1167,7 +1165,7 @@ export class SuperglueClient {
           }
         }
       `;
-      const response = await this.request<{ findRelevantIntegrations: SuggestedIntegration[] }>(query, { searchTerms });
+      const response = await this.request<{ findRelevantIntegrations: Integration[] }>(query, { searchTerms });
       return response.findRelevantIntegrations;
     }
 
