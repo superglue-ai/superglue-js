@@ -287,6 +287,14 @@ export interface BuildWorkflowArgs {
   verbose?: boolean;
 }
 
+export interface GenerateStepConfigArgs {
+  integrationId?: string;
+  currentStepConfig?: Partial<ApiConfig>;
+  stepInput?: Record<string, any>;
+  credentials?: Record<string, string>;
+  errorMessage?: string;
+}
+
 // UNUSED: IntegrationList is defined but never used (methods return inline { items: Integration[], total: number } instead)
 export type IntegrationList = {
   items: Integration[];
@@ -633,6 +641,65 @@ export class SuperglueClient {
           }, 2000);
         }
       }
+    }
+
+    async generateStepConfig({
+      integrationId,
+      currentStepConfig,
+      stepInput,
+      credentials,
+      errorMessage
+    }: GenerateStepConfigArgs): Promise<ApiConfig> {
+      const mutation = `
+        mutation GenerateStepConfig(
+          $integrationId: String,
+          $currentStepConfig: JSON,
+          $stepInput: JSON,
+          $credentials: JSON,
+          $errorMessage: String
+        ) {
+          generateStepConfig(
+            integrationId: $integrationId,
+            currentStepConfig: $currentStepConfig,
+            stepInput: $stepInput,
+            credentials: $credentials,
+            errorMessage: $errorMessage
+          ) {
+            id
+            version
+            createdAt
+            updatedAt
+            urlHost
+            urlPath
+            instruction
+            method
+            queryParams
+            headers
+            body
+            documentationUrl
+            responseSchema
+            responseMapping
+            authentication
+            pagination {
+              type
+              pageSize
+              cursorPath
+              stopCondition
+            }
+            dataPath
+          }
+        }
+      `;
+
+      const result = await this.request<{ generateStepConfig: ApiConfig }>(mutation, {
+        integrationId,
+        currentStepConfig,
+        stepInput,
+        credentials,
+        errorMessage
+      });
+
+      return result.generateStepConfig;
     }
 
     async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<ApiResult & { data: T }> {
