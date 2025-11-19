@@ -131,7 +131,7 @@ export interface ExecutionStep {
   apiConfig: ApiConfig;
   integrationId?: string;
   executionMode?: 'DIRECT' | 'LOOP';
-  loopSelector?: JSONata;
+  loopSelector?: string;
   loopMaxIters?: number;
   inputMapping?: JSONata;
   responseMapping?: JSONata;
@@ -289,6 +289,7 @@ export interface BuildWorkflowArgs {
 
 export interface GenerateStepConfigArgs {
   integrationId?: string;
+  currentDataSelector?: string;
   currentStepConfig?: Partial<ApiConfig>;
   stepInput?: Record<string, any>;
   credentials?: Record<string, string>;
@@ -646,14 +647,16 @@ export class SuperglueClient {
     async generateStepConfig({
       integrationId,
       currentStepConfig,
+      currentDataSelector,
       stepInput,
       credentials,
       errorMessage
-    }: GenerateStepConfigArgs): Promise<ApiConfig> {
+    }: GenerateStepConfigArgs): Promise<{config: ApiConfig, dataSelector: string}> {
       const mutation = `
         mutation GenerateStepConfig(
           $integrationId: String,
           $currentStepConfig: JSON,
+          $currentDataSelector: String,
           $stepInput: JSON,
           $credentials: JSON,
           $errorMessage: String
@@ -661,6 +664,7 @@ export class SuperglueClient {
           generateStepConfig(
             integrationId: $integrationId,
             currentStepConfig: $currentStepConfig,
+            currentDataSelector: $currentDataSelector,
             stepInput: $stepInput,
             credentials: $credentials,
             errorMessage: $errorMessage
@@ -691,15 +695,16 @@ export class SuperglueClient {
         }
       `;
 
-      const result = await this.request<{ generateStepConfig: ApiConfig }>(mutation, {
+      const result = await this.request<{ generateStepConfig: { config: ApiConfig, dataSelector: string } }>(mutation, {
         integrationId,
         currentStepConfig,
+        currentDataSelector,
         stepInput,
         credentials,
         errorMessage
       });
 
-      return result.generateStepConfig;
+      return { config: result.generateStepConfig.config, dataSelector: result.generateStepConfig.dataSelector };
     }
 
     async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<ApiResult & { data: T }> {
