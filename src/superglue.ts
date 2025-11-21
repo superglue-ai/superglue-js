@@ -1165,17 +1165,27 @@ export class SuperglueClient {
         .then(data => data.upsertWorkflow);
     }
 
-    async deleteWorkflow(id: string): Promise<boolean> {
-      const mutation = `
-        mutation DeleteWorkflow($id: ID!) {
-          deleteWorkflow(id: $id)
-        }
-      `;
-      return this.request<{ deleteWorkflow: boolean }>(mutation, { id })
-        .then(data => data.deleteWorkflow);
-    }
+  async deleteWorkflow(id: string): Promise<boolean> {
+    const mutation = `
+      mutation DeleteWorkflow($id: ID!) {
+        deleteWorkflow(id: $id)
+      }
+    `;
+    return this.request<{ deleteWorkflow: boolean }>(mutation, { id })
+      .then(data => data.deleteWorkflow);
+  }
 
-    async listIntegrations(limit: number = 10, offset: number = 0): Promise<{ items: Integration[], total: number }> {
+  async renameWorkflow(oldId: string, newId: string): Promise<Workflow> {
+    const mutation = `
+      mutation RenameWorkflow($oldId: ID!, $newId: ID!) {
+        renameWorkflow(oldId: $oldId, newId: $newId) {${SuperglueClient.workflowQL}}
+      }
+    `;
+    return this.request<{ renameWorkflow: Workflow }>(mutation, { oldId, newId })
+      .then(data => data.renameWorkflow);
+  }
+
+  async listIntegrations(limit: number = 10, offset: number = 0): Promise<{ items: Integration[], total: number }> {
       const query = `
         query ListIntegrations($limit: Int!, $offset: Int!) {
           listIntegrations(limit: $limit, offset: $offset) {
