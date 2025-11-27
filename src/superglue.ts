@@ -666,32 +666,35 @@ export class SuperglueClient {
             credentials: $credentials,
             errorMessage: $errorMessage
           ) {
-            id
-            version
-            createdAt
-            updatedAt
-            urlHost
-            urlPath
-            instruction
-            method
-            queryParams
-            headers
-            body
-            documentationUrl
-            responseSchema
-            responseMapping
-            authentication
-            pagination {
-              type
-              pageSize
-              cursorPath
-              stopCondition
+            config {
+              id
+              version
+              createdAt
+              updatedAt
+              urlHost
+              urlPath
+              instruction
+              method
+              queryParams
+              headers
+              body
+              documentationUrl
+              responseSchema
+              responseMapping
+              authentication
+              pagination {
+                type
+                pageSize
+                cursorPath
+                stopCondition
+              }
+              dataPath
             }
-            dataPath
+            dataSelector
           }
         }
       `;
-
+    
       const result = await this.request<{ generateStepConfig: { config: ApiConfig, dataSelector: string } }>(mutation, {
         integrationId,
         currentStepConfig,
@@ -700,7 +703,7 @@ export class SuperglueClient {
         credentials,
         errorMessage
       });
-
+    
       return { config: result.generateStepConfig.config, dataSelector: result.generateStepConfig.dataSelector };
     }
 
