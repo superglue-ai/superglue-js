@@ -149,10 +149,8 @@ export interface Workflow extends BaseConfig {
 
 export interface WorkflowStepResult {
   stepId: string;
-  config?: ApiConfig; 
   success: boolean;
-  rawData?: any;
-  transformedData?: any;
+  data?: any;
   error?: string;
 }
 
@@ -477,8 +475,7 @@ export class SuperglueClient {
             stepResults {
               stepId
               success
-              rawData
-              transformedData
+              data
               error
             }
             error
