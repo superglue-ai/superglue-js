@@ -131,7 +131,7 @@ export interface ExecutionStep {
   apiConfig: ApiConfig;
   integrationId?: string;
   executionMode?: 'DIRECT' | 'LOOP';
-  loopSelector?: JSONata;
+  loopSelector?: string;
   loopMaxIters?: number;
   inputMapping?: JSONata;
   responseMapping?: JSONata;
@@ -149,10 +149,8 @@ export interface Workflow extends BaseConfig {
 
 export interface WorkflowStepResult {
   stepId: string;
-  config?: ApiConfig; 
   success: boolean;
-  rawData?: any;
-  transformedData?: any;
+  data?: any;
   error?: string;
 }
 
@@ -289,6 +287,7 @@ export interface BuildWorkflowArgs {
 
 export interface GenerateStepConfigArgs {
   integrationId?: string;
+  currentDataSelector?: string;
   currentStepConfig?: Partial<ApiConfig>;
   stepInput?: Record<string, any>;
   credentials?: Record<string, string>;
@@ -568,7 +567,8 @@ export class SuperglueClient {
       }
 
       try {
-        const result = await this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
+        type GraphQLWorkflowResult = Omit<WorkflowResult, 'stepResults'> & { data?: any, stepResults: (WorkflowStepResult & { rawData: any, transformedData: any })[] };
+        const result = await this.request<{ executeWorkflow: GraphQLWorkflowResult }>(mutation, {
           input: gqlInput,
           payload,
           credentials,
@@ -579,7 +579,12 @@ export class SuperglueClient {
           throw new Error(result.error);
         }
 
-        return result;
+        // if the data in the stepResults is not undefined, set the data to the transformedData
+        result.stepResults.forEach(stepResult => {
+          stepResult.data = stepResult.transformedData;
+        });
+
+        return result as WorkflowResult & { data?: T };
       } finally {
         // Clean up log subscription
         if (logSubscription) {
@@ -646,14 +651,16 @@ export class SuperglueClient {
     async generateStepConfig({
       integrationId,
       currentStepConfig,
+      currentDataSelector,
       stepInput,
       credentials,
       errorMessage
-    }: GenerateStepConfigArgs): Promise<ApiConfig> {
+    }: GenerateStepConfigArgs): Promise<{config: ApiConfig, dataSelector: string}> {
       const mutation = `
         mutation GenerateStepConfig(
           $integrationId: String,
           $currentStepConfig: JSON,
+          $currentDataSelector: String,
           $stepInput: JSON,
           $credentials: JSON,
           $errorMessage: String
@@ -661,45 +668,50 @@ export class SuperglueClient {
           generateStepConfig(
             integrationId: $integrationId,
             currentStepConfig: $currentStepConfig,
+            currentDataSelector: $currentDataSelector,
             stepInput: $stepInput,
             credentials: $credentials,
             errorMessage: $errorMessage
           ) {
-            id
-            version
-            createdAt
-            updatedAt
-            urlHost
-            urlPath
-            instruction
-            method
-            queryParams
-            headers
-            body
-            documentationUrl
-            responseSchema
-            responseMapping
-            authentication
-            pagination {
-              type
-              pageSize
-              cursorPath
-              stopCondition
+            config {
+              id
+              version
+              createdAt
+              updatedAt
+              urlHost
+              urlPath
+              instruction
+              method
+              queryParams
+              headers
+              body
+              documentationUrl
+              responseSchema
+              responseMapping
+              authentication
+              pagination {
+                type
+                pageSize
+                cursorPath
+                stopCondition
+              }
+              dataPath
             }
-            dataPath
+            dataSelector
           }
         }
       `;
-
-      const result = await this.request<{ generateStepConfig: ApiConfig }>(mutation, {
+    
+      const result = await this.request<{ generateStepConfig: { config: ApiConfig, dataSelector: string } }>(mutation, {
         integrationId,
         currentStepConfig,
+        currentDataSelector,
         stepInput,
         credentials,
         errorMessage
       });
-
-      return result.generateStepConfig;
+    
+      return { config: result.generateStepConfig.config, dataSelector: result.generateStepConfig.dataSelector };
     }
 
     async call<T = unknown>({ id, endpoint, payload, credentials, options }: ApiCallArgs): Promise<ApiResult & { data: T }> {
