@@ -475,7 +475,8 @@ export class SuperglueClient {
             stepResults {
               stepId
               success
-              data
+              rawData
+              transformedData
               error
             }
             error
@@ -566,7 +567,8 @@ export class SuperglueClient {
       }
 
       try {
-        const result = await this.request<{ executeWorkflow: WorkflowResult & { data: T } }>(mutation, {
+        type GraphQLWorkflowResult = Omit<WorkflowResult, 'stepResults'> & { data?: any, stepResults: (WorkflowStepResult & { rawData: any, transformedData: any })[] };
+        const result = await this.request<{ executeWorkflow: GraphQLWorkflowResult }>(mutation, {
           input: gqlInput,
           payload,
           credentials,
@@ -577,7 +579,12 @@ export class SuperglueClient {
           throw new Error(result.error);
         }
 
-        return result;
+        // if the data in the stepResults is not undefined, set the data to the transformedData
+        result.stepResults.forEach(stepResult => {
+          stepResult.data = stepResult.transformedData;
+        });
+
+        return result as WorkflowResult & { data?: T };
       } finally {
         // Clean up log subscription
         if (logSubscription) {
